@@ -1,0 +1,78 @@
+BillboardImg image;
+float x11 = 15;
+float x12 = 500;
+float y11 = 500;
+float y12 = 70;
+  
+float x21 = 50;
+  
+float y21 = 150;
+
+int backgroundColour = 0xAAAAAA;
+//float[][] vertices = {{0, 0}, {-100, -100}, {50, -50}, {100, -100}}; 
+float[][] vertices = {{-100, -50, 0, 1}, {100, -50, 0, 1}, {100, 50, 0, 1}, {-100, 50, 0, 1}};
+float angle = 0;
+float scale = 1;
+float angularVelocity = 0.01f;
+Quad sprite;
+void setup(){
+  size(800, 600);
+  image = new BillboardImg("quadRotTest/testImage2.png");
+  image.setInvisColour(0x00FF00, 0x00FF00);
+  frameRate(30);
+  sprite = new Quad(vertices, image, Colour.YELLOW, Colour.MAGENTA, true, false);
+  //sprite.setRemoval(true);
+  sprite.setMode('m');
+}
+
+void draw(){
+  float speed = 60/frameRate;
+  background(backgroundColour);
+  //float[] interpolatedEdges = {7, 5, 6, 2};
+  //vertices[2][0] = mouseX;
+  //float centreX = (vertices[0][0]+vertices[1][0]+vertices[2][0]+vertices[3][0])*0.25;
+  //float centreY = (vertices[0][1]+vertices[1][1]+vertices[2][1]+vertices[3][1])*0.25;
+  //vertices[2][1] = mouseY;
+  
+  if(keyPressed){
+     if(key == '=' && scale < 5)
+       scale+=0.01*speed;
+     else if(key == '-' && scale > 0.01)
+       scale-=0.01*speed;
+     if(key == 's')
+       angularVelocity = 0;
+     else if(key == 'g')
+       angularVelocity = 0.01f;
+  }
+
+
+  float[][] drawVertices = {{vertices[0][0], vertices[0][1], 0, 1}, 
+                            {vertices[1][0], vertices[1][1], 0, 1},
+                            {vertices[2][0], vertices[2][1], 0, 1},
+                            {vertices[3][0], vertices[3][1], 0, 1}};
+  angle+=angularVelocity*speed;
+  for(byte i = 0; i < 4; i++){
+   float tempX = drawVertices[i][0];
+   float tempY = drawVertices[i][1];
+   drawVertices[i][0] = (tempX*(float)Math.cos(angle)-tempY*(float)Math.sin(angle))*scale+mouseX;
+   drawVertices[i][1] = (tempX*(float)Math.sin(angle)+tempY*(float)Math.cos(angle))*scale+mouseY;
+  }
+  
+  stroke(#FF00FF);
+  loadPixels();
+  QuadDraw.setFrame(pixels, width, height);
+  //QuadDraw.stroke(Colour.MAGENTA);
+  //QuadDraw.fill(Colour.YELLOW);
+  //QuadDraw.noStroke();
+  sprite.setVertices(drawVertices);
+  //QuadDraw.noFill();
+  QuadDraw.drawQuad(sprite);
+  //QuadDraw.drawLine(new IntWrapper(Math.round(x11)), new IntWrapper(Math.round(y11)), new IntWrapper(Math.round(x12)), new IntWrapper(Math.round(y12)), 0xFFFF00FF);
+  //QuadDraw.drawLine(new IntWrapper(Math.round(x21)), new IntWrapper(Math.round(y21)), new IntWrapper(Math.round(x22)), new IntWrapper(Math.round(y22)), 0xFFFF00FF);
+  updatePixels();
+  System.out.println(frameRate);
+  //if(QuadDraw.hasIntersection(vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1], vertices[0][0], vertices[0][1], false))
+  //  backgroundColour = #FF777700;
+  //else
+  //  backgroundColour = #FF000000;
+}
