@@ -11,10 +11,12 @@ float y21 = 150;
 int backgroundColour = 0xAAAAAA;
 //float[][] vertices = {{0, 0}, {-100, -100}, {50, -50}, {100, -100}}; 
 float[][] vertices = {{-100, -50, 1, 1}, {100, -50, 1, 1}, {100, 50, 1, 1}, {-100, 50, 1, 1}};
+float[][] vertices2 = {{200, 200, 1.1, 1}, {300, 200, 0.01, 1}, {300, 300, 0.01, 1}, {200, 300, 1.1, 1}};
 float angle = 0;
 float scale = 1;
 float angularVelocity = 0.01f;
 Quad sprite;
+Quad sprite2;
 void setup(){
   size(800, 600);
   image = new BillboardImg("quadRotTest/testImage2.png");
@@ -25,6 +27,7 @@ void setup(){
   sprite.setVertexBrightness(vertexBrightness);
   //sprite.setRemoval(true);
   sprite.setMode('r');
+  sprite2 = new Quad(vertices2, image, Colour.WHITE, Colour.MAGENTA, true, false);
 }
 
 void draw(){
@@ -52,7 +55,7 @@ void draw(){
                             {vertices[1][0], vertices[1][1], vertices[1][2], vertices[1][3]},
                             {vertices[2][0], vertices[2][1], vertices[2][2], vertices[2][3]},
                             {vertices[3][0], vertices[3][1], vertices[3][2], vertices[3][3]}};
-  angle+=angularVelocity*speed;
+  //angle+=angularVelocity*speed;
   for(byte i = 0; i < 4; i++){
    float tempX = drawVertices[i][0];
    float tempY = drawVertices[i][1];
@@ -69,6 +72,9 @@ void draw(){
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
   QuadDraw.drawQuad(sprite);
+  QuadDraw.drawQuad(sprite2);
+
+
   //QuadDraw.drawLine(new IntWrapper(Math.round(x11)), new IntWrapper(Math.round(y11)), new IntWrapper(Math.round(x12)), new IntWrapper(Math.round(y12)), 0xFFFF00FF);
   //QuadDraw.drawLine(new IntWrapper(Math.round(x21)), new IntWrapper(Math.round(y21)), new IntWrapper(Math.round(x22)), new IntWrapper(Math.round(y22)), 0xFFFF00FF);
   updatePixels();

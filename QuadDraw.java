@@ -1,7 +1,7 @@
 public class QuadDraw{
   private static int fill = 0;
   private static int stroke = 0;
-  private static byte flags = 2; //0 = stencilTestResults, 4 = depthWrite, 8 = hasStroke, 16 = hasFill
+  private static byte flags = 4; //0 = stencilTestResults, 4 = depthWrite, 8 = hasStroke, 16 = hasFill
   private static int[] frame = new int[100000];
   private static float[] zBuff = new float[100000];
   private static byte[] stencil = new byte[100000];
@@ -236,8 +236,8 @@ public class QuadDraw{
                                 xPos, yPos); 
               gamma = returnGamma(alpha, beta);
             }
-            int pixelPos = i*wid+j;
-            float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta*vertices[indices[2]][2];
+
+
 
             if(useImage){
               float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
@@ -278,6 +278,8 @@ public class QuadDraw{
               }
               //Updating the pixel
               if(draw){
+                int pixelPos = i*wid+j;
+                float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
                 if((colour & 0xFFFFFF) != 0){
                   float adjustedAlpha = invZ[indices[0]]*alpha;
                   float adjustedBeta = invZ[indices[1]]*beta;
@@ -293,11 +295,12 @@ public class QuadDraw{
                                                tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma))};
                   colour = (colour & 0xFF000000)|((int)(Math.min(255, ((colour >>> 16) & 0xFF)*overallBrightness[0])) << 16)|((int)(Math.min(255, ((colour >>> 8) & 0xFF)*overallBrightness[1])) << 8)|((int)(Math.min(255, (colour & 0xFF)*overallBrightness[2])));
                 }
-                if(stencil[pixelPos] == 0 && ((flags & 4) == 0 && (z < zBuff[pixelPos] || zBuff[pixelPos] <= 0) || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){
+                if(stencil[pixelPos] == 0 && ((flags & 4) == 0 && (z < zBuff[pixelPos] || zBuff[pixelPos] <= 0) || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){ //<>//
                    if((fill >>> 24) < 0xFF)
                      frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
                    else
                      frame[pixelPos] = colour;
+                     
                    zBuff[pixelPos] = z;
               }
               else if((fill >>> 24) < 0xFF)
