@@ -1,5 +1,5 @@
 public class Quad{
-  public static final int[][] TRI_INDICES = {{0, 2, 3}, {1, 2, 3}};
+  public static final int[][] TRI_INDICES = {{0, 2, 3}, {0, 1, 2}};
   public static final float[][] UV_COORDS = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
   private BillboardImg image;
   //r = replace pixels and do not draw areas where specified by billboard image
@@ -82,7 +82,6 @@ public class Quad{
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = newVertices[i][j];
-        vertexBrightness[i][j] = 1;
       }
       vertices[i][3] = newVertices[i][3];
     }

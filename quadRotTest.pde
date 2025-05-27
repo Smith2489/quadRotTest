@@ -10,7 +10,7 @@ float y21 = 150;
 
 int backgroundColour = 0xAAAAAA;
 //float[][] vertices = {{0, 0}, {-100, -100}, {50, -50}, {100, -100}}; 
-float[][] vertices = {{-100, -50, 0, 1}, {100, -50, 0, 1}, {100, 50, 0, 1}, {-100, 50, 0, 1}};
+float[][] vertices = {{-100, -50, 1, 1}, {100, -50, 1, 1}, {100, 50, 1, 1}, {-100, 50, 1, 1}};
 float angle = 0;
 float scale = 1;
 float angularVelocity = 0.01f;
@@ -21,8 +21,10 @@ void setup(){
   image.setInvisColour(0x00FF00, 0x00FF00);
   frameRate(30);
   sprite = new Quad(vertices, image, Colour.YELLOW, Colour.MAGENTA, true, false);
+  float[][] vertexBrightness = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 0}};
+  sprite.setVertexBrightness(vertexBrightness);
   //sprite.setRemoval(true);
-  sprite.setMode('m');
+  sprite.setMode('r');
 }
 
 void draw(){
@@ -46,10 +48,10 @@ void draw(){
   }
 
 
-  float[][] drawVertices = {{vertices[0][0], vertices[0][1], 0, 1}, 
-                            {vertices[1][0], vertices[1][1], 0, 1},
-                            {vertices[2][0], vertices[2][1], 0, 1},
-                            {vertices[3][0], vertices[3][1], 0, 1}};
+  float[][] drawVertices = {{vertices[0][0], vertices[0][1], vertices[0][2], vertices[0][3]}, 
+                            {vertices[1][0], vertices[1][1], vertices[1][2], vertices[1][3]},
+                            {vertices[2][0], vertices[2][1], vertices[2][2], vertices[2][3]},
+                            {vertices[3][0], vertices[3][1], vertices[3][2], vertices[3][3]}};
   angle+=angularVelocity*speed;
   for(byte i = 0; i < 4; i++){
    float tempX = drawVertices[i][0];
