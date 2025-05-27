@@ -295,7 +295,7 @@ public class QuadDraw{
                                                tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma))};
                   colour = (colour & 0xFF000000)|((int)(Math.min(255, ((colour >>> 16) & 0xFF)*overallBrightness[0])) << 16)|((int)(Math.min(255, ((colour >>> 8) & 0xFF)*overallBrightness[1])) << 8)|((int)(Math.min(255, (colour & 0xFF)*overallBrightness[2])));
                 }
-                if(stencil[pixelPos] == 0 && ((flags & 4) == 0 && (z < zBuff[pixelPos] || zBuff[pixelPos] <= 0) || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){ //<>//
+                if(stencil[pixelPos] == 0 && ((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){ //<>//
                    if((fill >>> 24) < 0xFF)
                      frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
                    else

@@ -243,7 +243,11 @@ public class Quad{
   }
   //Returns the reference to all vertices
   public float[][] returnVertices(){
-     return vertices; 
+    float[][] returnVerts = {{vertices[0][0], vertices[0][1], vertices[0][2], vertices[0][3]},
+                              {vertices[1][0], vertices[1][1], vertices[1][2], vertices[1][3]},
+                              {vertices[2][0], vertices[2][1], vertices[2][2], vertices[2][3]},
+                              {vertices[3][0], vertices[3][1], vertices[3][2], vertices[3][3]}};
+    return returnVerts; 
   }
   
   //Returns centre position

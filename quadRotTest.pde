@@ -11,7 +11,7 @@ float y21 = 150;
 int backgroundColour = 0xAAAAAA;
 //float[][] vertices = {{0, 0}, {-100, -100}, {50, -50}, {100, -100}}; 
 float[][] vertices = {{-100, -50, 1, 1}, {100, -50, 1, 1}, {100, 50, 1, 1}, {-100, 50, 1, 1}};
-float[][] vertices2 = {{200, 200, 1.1, 1}, {300, 200, 0.01, 1}, {300, 300, 0.01, 1}, {200, 300, 1.1, 1}};
+float[][] vertices2 = {{200, 200, 0.5, 1}, {300, 200, 5, 1}, {300, 300, 1.1, 1}, {200, 300, 0.1, 1}};
 float angle = 0;
 float scale = 1;
 float angularVelocity = 0.01f;
@@ -71,8 +71,10 @@ void draw(){
   //QuadDraw.noStroke();
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
+
   QuadDraw.drawQuad(sprite);
   QuadDraw.drawQuad(sprite2);
+
 
 
   //QuadDraw.drawLine(new IntWrapper(Math.round(x11)), new IntWrapper(Math.round(y11)), new IntWrapper(Math.round(x12)), new IntWrapper(Math.round(y12)), 0xFFFF00FF);
