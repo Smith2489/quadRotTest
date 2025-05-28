@@ -238,7 +238,7 @@ public class QuadDraw{
             }
 
 
-
+            int[] brokenUpColour = new int[4];
             if(useImage){
               float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
               if(overallWeight > 0.0000001)
@@ -257,24 +257,40 @@ public class QuadDraw{
               //Grabbing the colour of the current pixel in the image
         
               draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
+              int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
+              //Breaking up the colours in the fill and the image into their component ARGB values
+              int[] brokenUpFill = {fill & 0xFF000000, ((fill >>> 16) & 0xFF), ((fill >>> 8) & 0xFF), fill & 0xFF};
+              int[] brokenUpSprite = {0xFF000000, ((spritePixel >>> 16) & 0xFF), ((spritePixel >>> 8) & 0xFF), spritePixel & 0xFF};
+
               if(draw){
-                 int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
+
                  if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
-                   //Breaking up the colours in the fill and the image into their component ARGB values
-                   int[] brokenUpFill = {fill & 0xFF000000, ((fill >>> 16) & 0xFF), ((fill >>> 8) & 0xFF), fill & 0xFF};
-                   int[] brokenUpSprite = {0xFF000000, ((spritePixel >>> 16) & 0xFF), ((spritePixel >>> 8) & 0xFF), spritePixel & 0xFF};
-          
-                   //Multiplying the fill's channels by the image's channels and recombining them
-                   int[] brokenUpColour = {brokenUpFill[0], (int)(brokenUpSprite[1]*brokenUpFill[1]*0.003921569f), (int)(brokenUpSprite[2]*brokenUpFill[2]*0.003921569f), (int)(brokenUpSprite[3]*brokenUpFill[3]*0.003921569f)};
-                   colour = brokenUpColour[0]|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8) | brokenUpColour[3];
+                   //Multiplying the fill's channels by the image's channels
+                   brokenUpColour[0] = brokenUpFill[0];
+                   brokenUpColour[1] = (int)(brokenUpSprite[1]*brokenUpFill[1]*0.003921569f); 
+                   brokenUpColour[2] = (int)(brokenUpSprite[2]*brokenUpFill[2]*0.003921569f); 
+                   brokenUpColour[3] = (int)(brokenUpSprite[3]*brokenUpFill[3]*0.003921569f);
                   }
-                  else
-                     colour = (fill & 0xFF000000) | (spritePixel & 0xFFFFFF);
+                  else{
+                     brokenUpColour[0] = brokenUpFill[0];
+                     brokenUpColour[1] = brokenUpSprite[1];
+                     brokenUpColour[2] = brokenUpSprite[2];
+                     brokenUpColour[3] = brokenUpSprite[3];
+                  }
                 }
                 if(!draw && (sprite.returnMode() == 'u' || sprite.returnMode() == 'k')){
                   draw = true;
-                  colour = fill;
+                  brokenUpColour[0] = brokenUpFill[0];
+                  brokenUpColour[1] = brokenUpFill[1];
+                  brokenUpColour[2] = brokenUpFill[2];
+                  brokenUpColour[3] = brokenUpFill[3];
                 }
+              }
+              else{
+                brokenUpColour[0] = fill & 0xFF000000;
+                brokenUpColour[1] = (fill >>> 16) & 0xFF;
+                brokenUpColour[2] = (fill >>> 8) & 0xFF;
+                brokenUpColour[3] = fill & 0xFF;
               }
               //Updating the pixel
               if(draw){
@@ -293,15 +309,19 @@ public class QuadDraw{
                   float[] overallBrightness = {tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma)),
                                                tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
                                                tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma))};
-                  colour = (colour & 0xFF000000)|((int)(Math.min(255, ((colour >>> 16) & 0xFF)*overallBrightness[0])) << 16)|((int)(Math.min(255, ((colour >>> 8) & 0xFF)*overallBrightness[1])) << 8)|((int)(Math.min(255, (colour & 0xFF)*overallBrightness[2])));
+                  brokenUpColour[0] = (colour & 0xFF000000);
+                  brokenUpColour[1] = (int)(Math.min(255, brokenUpColour[1]*overallBrightness[0]));
+                  brokenUpColour[2] = (int)(Math.min(255, brokenUpColour[2]*overallBrightness[1]));
+                  brokenUpColour[3] = (int)(Math.min(255, brokenUpColour[3]*overallBrightness[2]));
                 }
                 if(stencil[pixelPos] == 0 && ((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){ //<>//
-                   if((fill >>> 24) < 0xFF)
-                     frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
-                   else
-                     frame[pixelPos] = colour;
+                  colour = brokenUpColour[0]|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8)|brokenUpColour[3];
+                  if((fill >>> 24) < 0xFF)
+                    frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
+                  else
+                    frame[pixelPos] = colour;
                      
-                   zBuff[pixelPos] = z;
+                  zBuff[pixelPos] = z;
               }
               else if((fill >>> 24) < 0xFF)
                 frame[pixelPos] = Colour.interpolateColours(frame[pixelPos], colour);

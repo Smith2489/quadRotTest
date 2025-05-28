@@ -26,7 +26,7 @@ void setup(){
   float[][] vertexBrightness = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 0}};
   sprite.setVertexBrightness(vertexBrightness);
   //sprite.setRemoval(true);
-  sprite.setMode('r');
+  sprite.setMode('m');
   sprite2 = new Quad(vertices2, image, Colour.WHITE, Colour.MAGENTA, true, false);
 }
 
