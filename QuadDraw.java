@@ -297,9 +297,9 @@ public class QuadDraw{
                 int pixelPos = i*wid+j;
                 float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
                 if((colour & 0xFFFFFF) != 0){
-                  float adjustedAlpha = invZ[indices[0]]*alpha;
-                  float adjustedBeta = invZ[indices[1]]*beta;
-                  float adjustedGamma = invZ[indices[2]]*gamma;
+                  float adjustedAlpha = invZ[indices[0]]*adjWeights[indices[0]]*alpha;
+                  float adjustedBeta = invZ[indices[1]]*adjWeights[indices[1]]*beta;
+                  float adjustedGamma = invZ[indices[2]]*adjWeights[indices[2]]*gamma;
                   float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma-0.0000001f;
                   if(tempZ > 0.0000001f)
                     tempZ = 1/tempZ-0.0000001f;
