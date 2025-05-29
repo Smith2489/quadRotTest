@@ -239,6 +239,9 @@ public class QuadDraw{
 
 
             int[] brokenUpColour = new int[4];
+            float adjustedAlpha = adjWeights[indices[0]]*alpha;
+            float adjustedBeta = adjWeights[indices[1]]*beta;
+            float adjustedGamma = adjWeights[indices[2]]*gamma;
             if(useImage){
               float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
               if(overallWeight > 0.0000001)
@@ -246,8 +249,8 @@ public class QuadDraw{
               else
                 overallWeight = 0.0000001f;
               //Finding the UV coordinates of the texture in the current triangle
-              float u = ((Quad.UV_COORDS[indices[0]][0]*adjWeights[indices[0]]*alpha)+(Quad.UV_COORDS[indices[1]][0]*adjWeights[indices[1]]*beta)+(Quad.UV_COORDS[indices[2]][0]*adjWeights[indices[2]]*gamma))*overallWeight;
-              float v = ((Quad.UV_COORDS[indices[0]][1]*adjWeights[indices[0]]*alpha)+(Quad.UV_COORDS[indices[1]][1]*adjWeights[indices[1]]*beta)+(Quad.UV_COORDS[indices[2]][1]*adjWeights[indices[2]]*gamma))*overallWeight;
+              float u = ((Quad.UV_COORDS[indices[0]][0]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][0]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][0]*adjustedGamma))*overallWeight;
+              float v = ((Quad.UV_COORDS[indices[0]][1]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][1]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][1]*adjustedGamma))*overallWeight;
               u = Math.abs(u - (int)(u));
               v = Math.abs(v - (int)(v));
         
@@ -297,9 +300,9 @@ public class QuadDraw{
                 int pixelPos = i*wid+j;
                 float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
                 if((colour & 0xFFFFFF) != 0){
-                  float adjustedAlpha = invZ[indices[0]]*adjWeights[indices[0]]*alpha;
-                  float adjustedBeta = invZ[indices[1]]*adjWeights[indices[1]]*beta;
-                  float adjustedGamma = invZ[indices[2]]*adjWeights[indices[2]]*gamma;
+                  adjustedAlpha*=invZ[indices[0]];
+                  adjustedBeta*=invZ[indices[1]];
+                  adjustedGamma*=invZ[indices[2]];
                   float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma-0.0000001f;
                   if(tempZ > 0.0000001f)
                     tempZ = 1/tempZ-0.0000001f;
