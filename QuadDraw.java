@@ -107,6 +107,13 @@ public class QuadDraw{
     flags&=-9;
   }
   
+  public static void setDepthWrite(boolean depthEnable){
+     if(depthEnable)
+       flags|=4;
+     else
+       flags&=-5;
+  }
+  
   public static void drawQuad(Quad sprite){
     fill = sprite.returnFill();
     stroke = sprite.returnStroke();
@@ -257,8 +264,8 @@ public class QuadDraw{
               //Converting from UV coordinates to the real coordinates in the image
               int imgX = Math.round(u*sprite.returnImageWidth()-0.5f);
               int imgY = Math.round(v*sprite.returnImageHeight()-0.5f);
+              
               //Grabbing the colour of the current pixel in the image
-        
               draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
               int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
               //Breaking up the colours in the fill and the image into their component ARGB values

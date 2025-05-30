@@ -71,8 +71,9 @@ void draw(){
   //QuadDraw.noStroke();
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
-
+  QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite);
+  QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite2);
 
 

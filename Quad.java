@@ -11,7 +11,7 @@ public class Quad{
   private float[][] vertexBrightness = new float[4][3];
   private int fill = 0;
   private int stroke = 0;
-  private byte flags = 0; //0 = has stroke, 1 = has fill, 2 = Removal enable
+  private byte flags = 0; //0 = has stroke, 1 = has fill, 2 = Removal enable, 3 = depth Write
   
   public Quad(){
     for(byte i = 0; i < 4; i++){
@@ -191,6 +191,14 @@ public class Quad{
     flags&=-2;
   }
   
+  //Should disable depth write if noDraw in billboards is enabled and enable depth write if noDraw is disabled
+  public void setDepthWrite(boolean depthWrite){
+    if(depthWrite)
+      flags|=8;
+    else
+      flags&=-9;
+  }
+  
   //Returns if the rect has its fill enabled
   public boolean hasFill(){
     return (flags & 2) == 2;
@@ -201,6 +209,9 @@ public class Quad{
   }
   public boolean hasRemoval(){
     return (flags & 4) == 4;
+  }
+  public boolean getHasDepthWrite(){
+    return (flags & 8) == 8;
   }
   //Returns the fill of the rect
   public int returnFill(){
