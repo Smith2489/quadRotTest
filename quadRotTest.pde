@@ -72,7 +72,9 @@ void draw(){
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
   QuadDraw.setDepthWrite(false);
+  QuadDraw.setProbabilities(5, 4.5);
   QuadDraw.drawQuad(sprite);
+  QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
   QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite2);
 

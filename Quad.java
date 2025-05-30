@@ -12,6 +12,8 @@ public class Quad{
   private int fill = 0;
   private int stroke = 0;
   private byte flags = 0; //0 = has stroke, 1 = has fill, 2 = Removal enable, 3 = depth Write
+  private float maxFizzel = 1;
+  private float fizzelThreshold = 1.1f;
   
   public Quad(){
     for(byte i = 0; i < 4; i++){
@@ -86,6 +88,16 @@ public class Quad{
       vertices[i][3] = newVertices[i][3];
     }
   }
+  public void setFizzel(float newMax, float newThreshold){
+    maxFizzel = newMax;
+    fizzelThreshold = newThreshold;
+  }
+  public float returnMaxFizzel(){
+    return maxFizzel;
+  }
+  public float returnFizzelThreshold(){
+    return fizzelThreshold;
+  } 
   
   //Setting the fill colour of the rect
   public void fill(short r, short g, short b){
