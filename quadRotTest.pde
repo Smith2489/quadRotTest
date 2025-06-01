@@ -22,7 +22,7 @@ void setup(){
   image = new BillboardImg("quadRotTest/testImage2.png");
   image.setInvisColour(0x00FF00, 0x00FF00);
   frameRate(30);
-  sprite = new Quad(vertices, image, 0x77FFFFFF, Colour.MAGENTA, true, false);
+  sprite = new Quad(vertices, image, 0x80FFFFFF, Colour.MAGENTA, true, false);
   float[][] vertexBrightness = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 0}};
   sprite.setVertexBrightness(vertexBrightness);
   //sprite.setRemoval(true);

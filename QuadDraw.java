@@ -159,7 +159,9 @@ public class QuadDraw{
     }
 
     //Quad fill
-    if((flags & 16) == 16){     
+    if((flags & 16) == 16){  
+      int[] brokenUpColour = {fill >>> 24, 0, 0, 0}; //Temporary storage for the final pixel colour
+      int[] brokenUpFill = {((fill >>> 16) & 0xFF), ((fill >>> 8) & 0xFF), fill & 0xFF}; //Holds the component RGB channels of the fill
       float[] dists = new float[4];
       float[] adjWeights = {1, 1, 1, 1};
       boolean useImage = false;
@@ -223,9 +225,9 @@ public class QuadDraw{
           xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
           //Drawing between the edges
           for(int j = xBounds[0]; j < xBounds[1]; j++){
-            if(maxProbability <= threshold || Math.random()*maxProbability < threshold){ 
+            int pixelPos = i*wid+j;
+            if(stencil[pixelPos] == 0 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){ 
               float xPos = j+0.5f; //The centre-x of the pixel
-              int colour = fill; //Temporarily storing the fill as a separate colour
               boolean draw = true;//Determines if the current pixel should be updated
               int[] indices = Quad.TRI_INDICES[0];
               
@@ -252,8 +254,6 @@ public class QuadDraw{
                 gamma = returnGamma(alpha, beta);
               }
   
-  
-              int[] brokenUpColour = new int[4];
               float adjustedAlpha = adjWeights[indices[0]]*alpha;
               float adjustedBeta = adjWeights[indices[1]]*beta;
               float adjustedGamma = adjWeights[indices[2]]*gamma;
@@ -276,45 +276,39 @@ public class QuadDraw{
                 //Grabbing the colour of the current pixel in the image
                 draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
                 int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
-                //Breaking up the colours in the fill and the image into their component ARGB values
-                int[] brokenUpFill = {fill & 0xFF000000, ((fill >>> 16) & 0xFF), ((fill >>> 8) & 0xFF), fill & 0xFF};
-                int[] brokenUpSprite = {0xFF000000, ((spritePixel >>> 16) & 0xFF), ((spritePixel >>> 8) & 0xFF), spritePixel & 0xFF};
-  
+                //Breaking up the colours the image into their component RGB channels
+        
+                int[] brokenUpSprite = {((spritePixel >>> 16) & 0xFF), ((spritePixel >>> 8) & 0xFF), spritePixel & 0xFF};
                 if(draw){
-  
                    if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
                      //Multiplying the fill's channels by the image's channels
-                     brokenUpColour[0] = brokenUpFill[0];
-                     brokenUpColour[1] = (int)(brokenUpSprite[1]*brokenUpFill[1]*0.003921569f); 
-                     brokenUpColour[2] = (int)(brokenUpSprite[2]*brokenUpFill[2]*0.003921569f); 
-                     brokenUpColour[3] = (int)(brokenUpSprite[3]*brokenUpFill[3]*0.003921569f);
+                     brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[0]*0.003921569f); 
+                     brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[1]*0.003921569f); 
+                     brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[2]*0.003921569f);
                     }
                     else{
-                       brokenUpColour[0] = brokenUpFill[0];
-                       brokenUpColour[1] = brokenUpSprite[1];
-                       brokenUpColour[2] = brokenUpSprite[2];
-                       brokenUpColour[3] = brokenUpSprite[3];
+                       brokenUpColour[1] = brokenUpSprite[0];
+                       brokenUpColour[2] = brokenUpSprite[1];
+                       brokenUpColour[3] = brokenUpSprite[2];
                     }
                   }
                   if(!draw && (sprite.returnMode() == 'u' || sprite.returnMode() == 'k')){
                     draw = true;
-                    brokenUpColour[0] = brokenUpFill[0];
-                    brokenUpColour[1] = brokenUpFill[1];
-                    brokenUpColour[2] = brokenUpFill[2];
-                    brokenUpColour[3] = brokenUpFill[3];
+                    brokenUpColour[1] = brokenUpFill[0];
+                    brokenUpColour[2] = brokenUpFill[1];
+                    brokenUpColour[3] = brokenUpFill[2];
                   }
                 }
                 else{
-                  brokenUpColour[0] = fill & 0xFF000000;
+                  
                   brokenUpColour[1] = (fill >>> 16) & 0xFF;
                   brokenUpColour[2] = (fill >>> 8) & 0xFF;
                   brokenUpColour[3] = fill & 0xFF;
                 }
                 //Updating the pixel
                 if(draw){
-                  int pixelPos = i*wid+j;
                   float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
-                  if((colour & 0xFFFFFF) != 0){
+                  if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
                     adjustedAlpha*=invZ[indices[0]];
                     adjustedBeta*=invZ[indices[1]];
                     adjustedGamma*=invZ[indices[2]];
@@ -327,24 +321,21 @@ public class QuadDraw{
                     float[] overallBrightness = {tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma)),
                                                  tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
                                                  tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma))};
-                    brokenUpColour[0] = (colour & 0xFF000000);
                     brokenUpColour[1] = (int)(Math.min(255, brokenUpColour[1]*overallBrightness[0]));
                     brokenUpColour[2] = (int)(Math.min(255, brokenUpColour[2]*overallBrightness[1]));
                     brokenUpColour[3] = (int)(Math.min(255, brokenUpColour[3]*overallBrightness[2]));
-                  } //<>//
-                  if(stencil[pixelPos] == 0){
-                      colour = brokenUpColour[0]|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8)|brokenUpColour[3];
-                      if(((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){
-                        if((fill >>> 24) < 0xFF)
-                          frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
-                        else
-                          frame[pixelPos] = colour;
-                           
-                        zBuff[pixelPos] = z;
                   }
-                  else if((frame[pixelPos] >>> 24) < 0xFF)
-                    frame[pixelPos] = Colour.interpolateColours(frame[pixelPos], colour);
+                  int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
+                  if(((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){
+                    if(brokenUpColour[0] < 0xFF)
+                      frame[pixelPos] = interpolatePixels(brokenUpColour, brokenUpFrame);
+                    else
+                      frame[pixelPos] = (brokenUpColour[0] << 24)|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8)|brokenUpColour[3];
+                            //<>//
+                  zBuff[pixelPos] = z;
                 }
+                else if(brokenUpFrame[0] < 0xFF)
+                  frame[pixelPos] = interpolatePixels(brokenUpFrame, brokenUpColour);
               }
             }
           }
@@ -398,7 +389,14 @@ public class QuadDraw{
         drawLine(new IntWrapper(Math.round(vertices[i][0])), new IntWrapper(Math.round(vertices[i][1])), new IntWrapper(Math.round(vertices[(i+1)&3][0])), new IntWrapper(Math.round(vertices[(i+1)&3][1])), stroke);
   }
   
-  
+  public static int interpolatePixels(int[] pixelA, int[] pixelB){
+    float alphaNorm = pixelA[0]*0.003921569f;
+    int[] colour = {(int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]) << 24,
+                    (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]) << 16,
+                    (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]) << 8,
+                    (int)((pixelA[3] - pixelB[3])*alphaNorm + pixelB[3])};
+    return colour[0]|colour[1]|colour[2]|colour[3];
+  }
   
   //Tests if two lines are intersecting
   public static boolean hasIntersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, boolean countEnds){
