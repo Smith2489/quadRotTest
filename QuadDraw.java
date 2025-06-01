@@ -223,7 +223,7 @@ public class QuadDraw{
           xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
           //Drawing between the edges
           for(int j = xBounds[0]; j < xBounds[1]; j++){
-            if(Math.random()*maxProbability < threshold){ 
+            if(maxProbability <= threshold || Math.random()*maxProbability < threshold){ 
               float xPos = j+0.5f; //The centre-x of the pixel
               int colour = fill; //Temporarily storing the fill as a separate colour
               boolean draw = true;//Determines if the current pixel should be updated
@@ -332,17 +332,19 @@ public class QuadDraw{
                     brokenUpColour[2] = (int)(Math.min(255, brokenUpColour[2]*overallBrightness[1]));
                     brokenUpColour[3] = (int)(Math.min(255, brokenUpColour[3]*overallBrightness[2]));
                   } //<>//
-                  if(stencil[pixelPos] == 0 && ((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){ //<>//
-                    colour = brokenUpColour[0]|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8)|brokenUpColour[3];
-                    if((fill >>> 24) < 0xFF)
-                      frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
-                    else
-                      frame[pixelPos] = colour;
-                       
-                    zBuff[pixelPos] = z;
+                  if(stencil[pixelPos] == 0){
+                      colour = brokenUpColour[0]|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8)|brokenUpColour[3];
+                      if(((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){
+                        if((fill >>> 24) < 0xFF)
+                          frame[pixelPos] = Colour.interpolateColours(colour, frame[pixelPos]); 
+                        else
+                          frame[pixelPos] = colour;
+                           
+                        zBuff[pixelPos] = z;
+                  }
+                  else if((frame[pixelPos] >>> 24) < 0xFF)
+                    frame[pixelPos] = Colour.interpolateColours(frame[pixelPos], colour);
                 }
-                else if((fill >>> 24) < 0xFF)
-                  frame[pixelPos] = Colour.interpolateColours(frame[pixelPos], colour);
               }
             }
           }
