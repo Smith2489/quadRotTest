@@ -1,6 +1,4 @@
 public class QuadDraw{
-  private static int fill = 0;
-  private static int stroke = 0;
   private static byte flags = 4; //0 = stencilTestResults, 4 = depthWrite, 8 = hasStroke, 16 = hasFill
   private static int[] frame = new int[100000];
   private static float[] zBuff = new float[100000];
@@ -8,6 +6,12 @@ public class QuadDraw{
   private static float alpha = 0;
   private static float beta = 0;
   private static float gamma = 1;
+  private static int fill = 0;
+  private static int stroke = 0;
+  private static float alphaNorm = 1;
+  private static int[] brokenUpColour = {0, 0, 0, 0}; //Temporary storage for the final pixel colour
+  private static int[] brokenUpFill = {0, 0, 0}; //Holds the component RGB channels of the fill
+  private static int[] brokenUpSprite = {0, 0, 0};
   private static float maxProbability = 1;
   private static float threshold = 1.1f;
   private static int wid = 100;
@@ -31,6 +35,11 @@ public class QuadDraw{
     g&=0xFF;
     b&=0xFF;
     fill = 0xFF000000|(r << 16)|(g << 8)|b;
+    brokenUpColour[0] = 0xFF;
+    alphaNorm = 1;
+    brokenUpFill[0] = r;
+    brokenUpFill[1] = g;
+    brokenUpFill[2] = b;
   }
   public static void fill(short r, short g, short b, short a){
     flags|=16;
@@ -39,6 +48,11 @@ public class QuadDraw{
     b&=0xFF;
     a&=0xFF;
     fill = (a << 24)|(r << 16)|(g << 8)|b;
+    brokenUpColour[0] = a;
+    alphaNorm = a*0.003921569f;
+    brokenUpFill[0] = r;
+    brokenUpFill[1] = g;
+    brokenUpFill[2] = b;
   }
   public static void fill(int colour){
     flags|=16;
@@ -51,6 +65,11 @@ public class QuadDraw{
           colour = 0xFF000000 | colour;
     }
     fill = colour;
+    brokenUpColour[0] = fill >>> 24;
+    alphaNorm = brokenUpColour[0]*0.003921569f;
+    brokenUpFill[0] = (fill >>> 16) & 0xFF;
+    brokenUpFill[1] = (fill >>> 8) & 0xFF;
+    brokenUpFill[2] = fill & 0xFF;
   }
   public static void fill(int colour, short alpha){
     flags|=16;
@@ -60,6 +79,11 @@ public class QuadDraw{
       fill = (alpha << 24)|colour;
     else
       fill = (alpha << 24)|(colour << 16)|(colour << 8)|colour;
+    brokenUpColour[0] = alpha;
+    alphaNorm = alpha*0.003921569f;
+    brokenUpFill[0] = (fill >>> 16) & 0xFF;
+    brokenUpFill[1] = (fill >>> 8) & 0xFF;
+    brokenUpFill[2] = fill & 0xFF;
   }
   
   //Setting the stroke colour of the rect
@@ -124,6 +148,11 @@ public class QuadDraw{
   public static void drawQuad(Quad sprite){
     fill = sprite.returnFill();
     stroke = sprite.returnStroke();
+    brokenUpColour[0] = fill >>> 24;
+    alphaNorm = brokenUpColour[0]*0.003921569f;
+    brokenUpFill[0] = (fill >>> 16) & 0xFF;
+    brokenUpFill[1] = (fill >>> 8) & 0xFF;
+    brokenUpFill[2] = fill & 0xFF;
     flags = (byte)(((sprite.hasStroke()) ? flags|8 : flags&-9));
     flags = (byte)(((sprite.hasFill()) ? flags|16 : flags&-17));
     float[][] vertices = sprite.returnVertices();
@@ -159,9 +188,7 @@ public class QuadDraw{
     }
 
     //Quad fill
-    if((flags & 16) == 16){  
-      int[] brokenUpColour = {fill >>> 24, 0, 0, 0}; //Temporary storage for the final pixel colour
-      int[] brokenUpFill = {((fill >>> 16) & 0xFF), ((fill >>> 8) & 0xFF), fill & 0xFF}; //Holds the component RGB channels of the fill
+    if((flags & 16) == 16){
       float[] dists = new float[4];
       float[] adjWeights = {1, 1, 1, 1};
       boolean useImage = false;
@@ -278,7 +305,9 @@ public class QuadDraw{
                 int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
                 //Breaking up the colours the image into their component RGB channels
         
-                int[] brokenUpSprite = {((spritePixel >>> 16) & 0xFF), ((spritePixel >>> 8) & 0xFF), spritePixel & 0xFF};
+                brokenUpSprite[0] = (spritePixel >>> 16) & 0xFF;
+                brokenUpSprite[1] = (spritePixel >>> 8) & 0xFF;
+                brokenUpSprite[2] = spritePixel & 0xFF;
                 if(draw){
                    if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
                      //Multiplying the fill's channels by the image's channels
@@ -302,7 +331,7 @@ public class QuadDraw{
                 else{
                   
                   brokenUpColour[1] = (fill >>> 16) & 0xFF;
-                  brokenUpColour[2] = (fill >>> 8) & 0xFF;
+                  brokenUpColour[2] = (fill >>> 8) & 0xFF; //<>//
                   brokenUpColour[3] = fill & 0xFF;
                 }
                 //Updating the pixel
@@ -328,14 +357,14 @@ public class QuadDraw{
                   int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
                   if(((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){
                     if(brokenUpColour[0] < 0xFF)
-                      frame[pixelPos] = interpolatePixels(brokenUpColour, brokenUpFrame);
+                      frame[pixelPos] = Colour.interpolateColours(brokenUpColour, brokenUpFrame, alphaNorm);
                     else
                       frame[pixelPos] = (brokenUpColour[0] << 24)|(brokenUpColour[1] << 16)|(brokenUpColour[2] << 8)|brokenUpColour[3];
-                            //<>//
+                           
                   zBuff[pixelPos] = z;
                 }
                 else if(brokenUpFrame[0] < 0xFF)
-                  frame[pixelPos] = interpolatePixels(brokenUpFrame, brokenUpColour);
+                  frame[pixelPos] = Colour.interpolateColours(brokenUpFrame, brokenUpColour, alphaNorm);
               }
             }
           }
@@ -389,14 +418,7 @@ public class QuadDraw{
         drawLine(new IntWrapper(Math.round(vertices[i][0])), new IntWrapper(Math.round(vertices[i][1])), new IntWrapper(Math.round(vertices[(i+1)&3][0])), new IntWrapper(Math.round(vertices[(i+1)&3][1])), stroke);
   }
   
-  public static int interpolatePixels(int[] pixelA, int[] pixelB){
-    float alphaNorm = pixelA[0]*0.003921569f;
-    int[] colour = {(int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]) << 24,
-                    (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]) << 16,
-                    (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]) << 8,
-                    (int)((pixelA[3] - pixelB[3])*alphaNorm + pixelB[3])};
-    return colour[0]|colour[1]|colour[2]|colour[3];
-  }
+
   
   //Tests if two lines are intersecting
   public static boolean hasIntersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, boolean countEnds){
