@@ -1,5 +1,6 @@
 //A class taht literally just store a bunch of predefined colour values and functions to compute different colours
 public class Colour {
+    public static final float INV_255 = 0.003921569f;
     //Credit for these hex values goes to Rapid Table and their RGB to hex page
     //https://www.rapidtables.com/convert/color/rgb-to-hex.html
     //(Accessed on 18.1.2025)
@@ -88,9 +89,9 @@ public class Colour {
     //Computes the luminance of a colour assuming an SRGB space
     public static float computeLuminance(int colour){
         //Normalizes the red, green, and blue channels
-        float r = ((colour >>> 16) & 0xFF)*0.003921569f;
-        float g = ((colour >>> 8) & 0xFF)*0.003921569f;
-        float b = (colour & 0xFF)*0.003921569f;
+        float r = ((colour >>> 16) & 0xFF)*INV_255;
+        float g = ((colour >>> 8) & 0xFF)*INV_255;
+        float b = (colour & 0xFF)*INV_255;
         //Converts the channels to linear channels
         if(r <= 0.04045)
             r*=0.07739938f;
@@ -109,9 +110,9 @@ public class Colour {
     }
     public static float computeLuminance(short red, short green, short blue){
         //Normalizes the red, green, and blue channels
-        float r = (red & 0xFF)*0.003921569f;
-        float g = (green & 0xFF)*0.003921569f;
-        float b = (blue & 0xFF)*0.003921569f;
+        float r = (red & 0xFF)*INV_255;
+        float g = (green & 0xFF)*INV_255;
+        float b = (blue & 0xFF)*INV_255;
         //Converts the channels to linear channels
         if(r <= 0.04045)
             r*=0.07739938f;
@@ -144,7 +145,7 @@ public class Colour {
     //Computes the average of two colours using colour A's alpha channel
     public static int interpolateColours(int colourA, int colourB){
         //Computing t and 1-t for pixelA
-        float alpha = (colourA >>> 24)*0.003921569f;
+        float alpha = (colourA >>> 24)*INV_255;
         //Extracting the individual channels' data for pixel A and pixel B
         int[][] channels = {{colourA >>> 24, colourB >>> 24}, {(colourA >>> 16) & 0xFF, (colourB >>> 16) & 0xFF}, {(colourA >>> 8) & 0xFF, (colourB >>> 8) & 0xFF}, {colourA & 0xFF, colourB & 0xFF}};
         int[] returnChannels = {0, 0, 0, 0};
@@ -156,7 +157,7 @@ public class Colour {
         return returnChannels[0]|returnChannels[1]|returnChannels[2]|returnChannels[3];
     }
     public static int interpolateColours(int[] pixelA, int[] pixelB){
-      float alphaNorm = pixelA[0]*0.003921569f;
+      float alphaNorm = pixelA[0]*INV_255;
       int[] colour = {(int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]) << 24,
                       (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]) << 16,
                       (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]) << 8,

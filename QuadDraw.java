@@ -49,7 +49,7 @@ public class QuadDraw{
     a&=0xFF;
     fill = (a << 24)|(r << 16)|(g << 8)|b;
     brokenUpColour[0] = a;
-    alphaNorm = a*0.003921569f;
+    alphaNorm = a*Colour.INV_255;
     brokenUpFill[0] = r;
     brokenUpFill[1] = g;
     brokenUpFill[2] = b;
@@ -66,7 +66,7 @@ public class QuadDraw{
     }
     fill = colour;
     brokenUpColour[0] = fill >>> 24;
-    alphaNorm = brokenUpColour[0]*0.003921569f;
+    alphaNorm = brokenUpColour[0]*Colour.INV_255;
     brokenUpFill[0] = (fill >>> 16) & 0xFF;
     brokenUpFill[1] = (fill >>> 8) & 0xFF;
     brokenUpFill[2] = fill & 0xFF;
@@ -80,7 +80,7 @@ public class QuadDraw{
     else
       fill = (alpha << 24)|(colour << 16)|(colour << 8)|colour;
     brokenUpColour[0] = alpha;
-    alphaNorm = alpha*0.003921569f;
+    alphaNorm = alpha*Colour.INV_255;
     brokenUpFill[0] = (fill >>> 16) & 0xFF;
     brokenUpFill[1] = (fill >>> 8) & 0xFF;
     brokenUpFill[2] = fill & 0xFF;
@@ -149,7 +149,7 @@ public class QuadDraw{
     fill = sprite.returnFill();
     stroke = sprite.returnStroke();
     brokenUpColour[0] = fill >>> 24;
-    alphaNorm = brokenUpColour[0]*0.003921569f;
+    alphaNorm = brokenUpColour[0]*Colour.INV_255;
     brokenUpFill[0] = (fill >>> 16) & 0xFF;
     brokenUpFill[1] = (fill >>> 8) & 0xFF;
     brokenUpFill[2] = fill & 0xFF;
@@ -311,9 +311,9 @@ public class QuadDraw{
                 if(draw){
                    if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
                      //Multiplying the fill's channels by the image's channels
-                     brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[0]*0.003921569f); 
-                     brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[1]*0.003921569f); 
-                     brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[2]*0.003921569f);
+                     brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[0]*Colour.INV_255); 
+                     brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[1]*Colour.INV_255); 
+                     brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[2]*Colour.INV_255);
                     }
                     else{
                        brokenUpColour[1] = brokenUpSprite[0];
