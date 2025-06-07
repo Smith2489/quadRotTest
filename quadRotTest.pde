@@ -23,11 +23,12 @@ void setup(){
   image.setInvisColour(0x00FF00, 0x00FF00);
   frameRate(30);
   sprite = new Quad(vertices, image, 0x80FFFFFF, Colour.MAGENTA, true, false);
-  float[][] vertexBrightness = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 0}};
+  float[][] vertexBrightness = {{3, 1, 0, 0}, {0.25, 0, 1, 0}, {0.25f, 0, 0, 1}, {3, 1, 1, 0}};
   sprite.setVertexBrightness(vertexBrightness);
   //sprite.setRemoval(true);
   sprite.setMode('m');
   sprite2 = new Quad(vertices2, image, Colour.WHITE, Colour.MAGENTA, true, false);
+  sprite2.setStencilAction(new TestAction());
 }
 
 void draw(){
@@ -69,16 +70,18 @@ void draw(){
   //QuadDraw.stroke(Colour.MAGENTA);
   //QuadDraw.fill(Colour.YELLOW);
   //QuadDraw.noStroke();
+
+
+  
+  QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
+  QuadDraw.setDepthWrite(false);
+  QuadDraw.drawQuad(sprite2, (byte)5, 'g');
+
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
   QuadDraw.setDepthWrite(false);
-  QuadDraw.setProbabilities(5, 4.5);
-  QuadDraw.drawQuad(sprite);
-  QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
-  QuadDraw.setDepthWrite(false);
-  QuadDraw.drawQuad(sprite2);
-
-
+  //QuadDraw.setProbabilities(5, 4.5);
+  QuadDraw.drawQuad(sprite, (byte)5, 'g');
 
   //QuadDraw.drawLine(new IntWrapper(Math.round(x11)), new IntWrapper(Math.round(y11)), new IntWrapper(Math.round(x12)), new IntWrapper(Math.round(y12)), 0xFFFF00FF);
   //QuadDraw.drawLine(new IntWrapper(Math.round(x21)), new IntWrapper(Math.round(y21)), new IntWrapper(Math.round(x22)), new IntWrapper(Math.round(y22)), 0xFFFF00FF);
@@ -88,4 +91,10 @@ void draw(){
   //  backgroundColour = #FF777700;
   //else
   //  backgroundColour = #FF000000;
+}
+
+public class TestAction extends StencilAction{
+  public void updateStencil(){
+    stencilPixel = -1;
+  }
 }

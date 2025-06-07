@@ -8,12 +8,13 @@ public class Quad{
   //u = multiply pixels; areas that are not to be replaced will be fill colour
   private char mode = 'r';
   private float[][] vertices = new float[4][4];
-  private float[][] vertexBrightness = new float[4][3];
+  private float[][] vertexBrightness = new float[4][4];
   private int fill = 0;
   private int stroke = 0;
-  private byte flags = 0; //0 = has stroke, 1 = has fill, 2 = Removal enable, 3 = depth Write
+  private byte flags = 0; //0 = has stroke, 1 = has fill, 2 = Removal enable, 3 = depth Write, 4 = equal transparencies
   private float maxFizzel = 1;
   private float fizzelThreshold = 1.1f;
+  private StencilAction stencil = new StencilAction();
   
   public Quad(){
     for(byte i = 0; i < 4; i++){
@@ -21,11 +22,14 @@ public class Quad{
         vertices[i][j] = 0;
         vertexBrightness[i][j] = 1;
       }
+      vertexBrightness[i][3] = 1;
       vertices[i][3] = 1;
     }
-    flags = 2;
+    
+    flags = 18;
     fill = 0xFFFFFFFF;
     stroke = 0xFF000000;
+    stencil = new StencilAction();
   }
   
   public Quad(float[][] newVerts, int newFill, int newStroke, boolean hasFill, boolean hasStroke){
@@ -34,28 +38,32 @@ public class Quad{
         vertices[i][j] = newVerts[i][j];
         vertexBrightness[i][j] = 1;
       }
+      vertexBrightness[i][3] = 1;
       vertices[i][3] = newVerts[i][3];
     }
     fill(newFill);
     stroke(newStroke);
-    flags = 0;
+    flags = 16;
     if(hasFill)
       flags|=2;
     if(hasStroke)
       flags|=1;
+    stencil = new StencilAction();
   }
   public Quad(float[][] newVerts, BillboardImg img){
-    flags = 2;
+    flags = 18;
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = newVerts[i][j];
         vertexBrightness[i][j] = 1;
       }
+      vertexBrightness[i][3] = 1;
       vertices[i][3] = newVerts[i][3];
     }
     fill = 0xFFFFFFFF;
     stroke = 0xFF000000;
     image = img;
+    stencil = new StencilAction();
   }
   public Quad(float[][] newVerts, BillboardImg img, int newFill, int newStroke, boolean hasFill, boolean hasStroke){
     for(byte i = 0; i < 4; i++){
@@ -63,20 +71,30 @@ public class Quad{
         vertices[i][j] = newVerts[i][j];
         vertexBrightness[i][j] = 1;
       }
+      vertexBrightness[i][3] = 1;
       vertices[i][3] = newVerts[i][3];
     }
     fill(newFill);
     stroke(newStroke);
-    flags = 0;
+    flags = 16;
     if(hasFill)
       flags|=2;
     if(hasStroke)
       flags|=1;
     image = img;
+    stencil = new StencilAction();
   }
 
   public void setImage(BillboardImg img){
     image = img;
+  }
+  
+  public void setStencilAction(StencilAction newAction){
+    stencil = newAction;
+  }
+  
+  public StencilAction returnStencilActionPtr(){
+    return stencil;
   }
   
   //Setting the rect's vertices
@@ -225,6 +243,11 @@ public class Quad{
   public boolean getHasDepthWrite(){
     return (flags & 8) == 8;
   }
+  
+  public boolean equalTransparencies(){
+    return (flags & 16) == 16;
+  }
+  
   //Returns the fill of the rect
   public int returnFill(){
     return fill;
@@ -267,9 +290,9 @@ public class Quad{
   //Returns the reference to all vertices
   public float[][] returnVertices(){
     float[][] returnVerts = {{vertices[0][0], vertices[0][1], vertices[0][2], vertices[0][3]},
-                              {vertices[1][0], vertices[1][1], vertices[1][2], vertices[1][3]},
-                              {vertices[2][0], vertices[2][1], vertices[2][2], vertices[2][3]},
-                              {vertices[3][0], vertices[3][1], vertices[3][2], vertices[3][3]}};
+                             {vertices[1][0], vertices[1][1], vertices[1][2], vertices[1][3]},
+                             {vertices[2][0], vertices[2][1], vertices[2][2], vertices[2][3]},
+                             {vertices[3][0], vertices[3][1], vertices[3][2], vertices[3][3]}};
     return returnVerts; 
   }
   
@@ -293,30 +316,88 @@ public class Quad{
     return centroid;
   }
   
-  public void setVertexBrightness(float vertex1, float vertex2, float vertex3, byte index){
-    vertexBrightness[index][0] = vertex1;
-    vertexBrightness[index][1] = vertex2;
-    vertexBrightness[index][2] = vertex3;
+  public void setVertexBrightness(float r, float g, float b, byte index){
+    vertexBrightness[index][0] = 1;
+    vertexBrightness[index][1] = r;
+    vertexBrightness[index][2] = g;
+    vertexBrightness[index][3] = b;
+    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0]), 
+                            Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0]),
+                            Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0]),
+                            Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0])};
+    if(transparency[0] <= 0.0001 && transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
+      flags|=16;
+    else
+      flags&=-17;
   }
+  
+  public void setVertexBrightness(float a, float r, float g, float b, byte index){
+    vertexBrightness[index][0] = a;
+    vertexBrightness[index][1] = r;
+    vertexBrightness[index][2] = g;
+    vertexBrightness[index][3] = b;
+    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0]), 
+                            Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0]),
+                            Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0]),
+                            Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0])};
+    if(transparency[0] <= 0.0001 && transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
+      flags|=16;
+    else
+      flags&=-17;
+    
+  }
+  
   public void setVertexBrightness(float[] brightnessLevels, byte index){
-    vertexBrightness[index][0] = brightnessLevels[0];
-    vertexBrightness[index][1] = brightnessLevels[1];
-    vertexBrightness[index][2] = brightnessLevels[2];
+    if(brightnessLevels.length >= 4){
+      vertexBrightness[index][0] = brightnessLevels[0];
+      vertexBrightness[index][1] = brightnessLevels[1];
+      vertexBrightness[index][2] = brightnessLevels[2];
+      vertexBrightness[index][3] = brightnessLevels[3];
+    }
+    else{
+      vertexBrightness[index][0] = 1;
+      vertexBrightness[index][1] = brightnessLevels[0];
+      vertexBrightness[index][2] = brightnessLevels[1];
+      vertexBrightness[index][3] = brightnessLevels[2];
+    }
+    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0]), 
+                            Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0]),
+                            Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0]),
+                            Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0])};
+    if(transparency[0] <= 0.0001 && transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
+      flags|=16;
+    else
+      flags&=-17;
   }
 
   public void setVertexBrightness(float[][] brightnessLevels){
-    vertexBrightness[0][0] = brightnessLevels[0][0];
-    vertexBrightness[0][1] = brightnessLevels[0][1];
-    vertexBrightness[0][2] = brightnessLevels[0][2];
-    vertexBrightness[1][0] = brightnessLevels[1][0];
-    vertexBrightness[1][1] = brightnessLevels[1][1];
-    vertexBrightness[1][2] = brightnessLevels[1][2];
-    vertexBrightness[2][0] = brightnessLevels[2][0];
-    vertexBrightness[2][1] = brightnessLevels[2][1];
-    vertexBrightness[2][2] = brightnessLevels[2][2];
-    vertexBrightness[3][0] = brightnessLevels[3][0];
-    vertexBrightness[3][1] = brightnessLevels[3][1];
-    vertexBrightness[3][2] = brightnessLevels[3][2];
+    byte start = 0;
+    flags|=16;
+    if(brightnessLevels[0].length >= 4){
+      start = 1;
+      vertexBrightness[0][0] = brightnessLevels[0][0];
+      vertexBrightness[1][0] = brightnessLevels[1][0];
+      vertexBrightness[2][0] = brightnessLevels[2][0];
+      vertexBrightness[3][0] = brightnessLevels[3][0];
+      float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0]), 
+                              Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0]),
+                              Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0]),
+                              Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0])};
+      if(transparency[0] > 0.0001 || transparency[1] > 0.0001 || transparency[2] > 0.0001 || transparency[3] > 0.0001)
+        flags&=-17;
+    }
+    vertexBrightness[0][1] = brightnessLevels[0][start];
+    vertexBrightness[0][2] = brightnessLevels[0][start+1];
+    vertexBrightness[0][3] = brightnessLevels[0][start+2];
+    vertexBrightness[1][1] = brightnessLevels[1][start];
+    vertexBrightness[1][2] = brightnessLevels[1][start+1];
+    vertexBrightness[1][3] = brightnessLevels[1][start+2];
+    vertexBrightness[2][1] = brightnessLevels[2][start];
+    vertexBrightness[2][2] = brightnessLevels[2][start+1];
+    vertexBrightness[2][3] = brightnessLevels[2][start+2];
+    vertexBrightness[3][1] = brightnessLevels[3][start];
+    vertexBrightness[3][2] = brightnessLevels[3][start+1];
+    vertexBrightness[3][3] = brightnessLevels[3][start+2];
   }
   
   
@@ -348,27 +429,31 @@ public class Quad{
       fill = r.fill;
       stroke = r.stroke;
       flags = r.flags;
-      for(byte i = 0; i < 4; i++)
+      for(byte i = 0; i < 4; i++){
         for(byte j = 0; j < 3; j++){
           vertices[i][j] = r.vertices[i][j];   
-          vertexBrightness = r.vertexBrightness;
-        }  
+          vertexBrightness[i][j] = r.vertexBrightness[i][j];
+        }
+        vertexBrightness[i][3] = r.vertexBrightness[i][3];
+      }
     }
     else
        System.out.println("ERROR: OBJECT IS NOT OF TYPE RECT"); 
   }
   
   public void copy(Quad r){
-    fill = r.fill;
     image = r.image;
     mode = r.mode;
+    fill = r.fill;
     stroke = r.stroke;
     flags = r.flags;
-    for(byte i = 0; i < 4; i++)
+    for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
-        vertices[i][j] = r.vertices[i][j]; 
-        vertexBrightness = r.vertexBrightness;
-      }  
+        vertices[i][j] = r.vertices[i][j];   
+        vertexBrightness[i][j] = r.vertexBrightness[i][j];
+       }
+       vertexBrightness[i][3] = r.vertexBrightness[i][3];
+     }
   }
   
   //Tests if an object is equal to the current instance of Rect
@@ -381,11 +466,13 @@ public class Quad{
       isEqual&=(fill == r.fill);
       isEqual&=(stroke == r.stroke);
       isEqual&=(flags == r.flags);
-      for(byte i = 0; i < 4; i++)
+      for(byte i = 0; i < 4; i++){
         for(byte j = 0; j < 3; j++){
           isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
           isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= 0.0001);  
         }
+        isEqual&=(Math.abs(vertexBrightness[i][3] - r.vertexBrightness[i][3]) <= 0.0001);
+      }
       return isEqual;
     }
     else
@@ -398,11 +485,13 @@ public class Quad{
     isEqual&=(fill == r.fill);
     isEqual&=(stroke == r.stroke);
     isEqual&=(flags == r.flags);
-    for(byte i = 0; i < 4; i++)
-       for(byte j = 0; j < 3; j++){
-         isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
-         isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= 0.0001);  
-       }
+    for(byte i = 0; i < 4; i++){
+      for(byte j = 0; j < 3; j++){
+        isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
+        isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= 0.0001);  
+      }
+      isEqual&=(Math.abs(vertexBrightness[i][3] - r.vertexBrightness[i][3]) <= 0.0001);
+    }
     return isEqual;
   }
 }

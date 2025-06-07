@@ -155,20 +155,18 @@ public class Colour {
 
         //Combining the results
         return returnChannels[0]|returnChannels[1]|returnChannels[2]|returnChannels[3];
-    }
-    public static int interpolateColours(int[] pixelA, int[] pixelB){
-      float alphaNorm = pixelA[0]*INV_255;
-      int[] colour = {(int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]) << 24,
-                      (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]) << 16,
-                      (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]) << 8,
-                      (int)((pixelA[3] - pixelB[3])*alphaNorm + pixelB[3])};
-      return colour[0]|colour[1]|colour[2]|colour[3];
   }
-  public static int interpolateColours(int[] pixelA, int[] pixelB, float alphaNorm){
-      int[] colour = {(int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]) << 24,
-                      (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]) << 16,
-                      (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]) << 8,
-                      (int)((pixelA[3] - pixelB[3])*alphaNorm + pixelB[3])};
-      return colour[0]|colour[1]|colour[2]|colour[3];
+  public static void interpolateColours(int[] pixelA, int[] pixelB){
+    float alphaNorm = pixelA[0]*INV_255;
+    pixelA[0] = (int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]);
+    pixelA[1] = (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]);
+    pixelA[2] = (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]);
+    pixelA[3] = (int)((pixelA[3] - pixelB[3])*alphaNorm + pixelB[3]);
+  }
+  public static void interpolateColours(int[] pixelA, int[] pixelB, float alphaNorm){
+    pixelA[0] = (int)((pixelA[0] - pixelB[0])*alphaNorm + pixelB[0]);
+    pixelA[1] = (int)((pixelA[1] - pixelB[1])*alphaNorm + pixelB[1]);
+    pixelA[2] = (int)((pixelA[2] - pixelB[2])*alphaNorm + pixelB[2]);
+    pixelA[3] = (int)((pixelA[3] - pixelB[3])*alphaNorm + pixelB[3]);
   }
 }
