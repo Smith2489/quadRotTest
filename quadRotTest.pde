@@ -25,6 +25,7 @@ void setup(){
   sprite = new Quad(vertices, image, 0x80FFFFFF, Colour.MAGENTA, true, false);
   float[][] vertexBrightness = {{3, 1, 0, 0}, {0.25, 0, 1, 0}, {0.25f, 0, 0, 1}, {3, 1, 1, 0}};
   sprite.setVertexBrightness(vertexBrightness);
+  sprite.setStencilAction(new OtherTest());
   //sprite.setRemoval(true);
   sprite.setMode('m');
   sprite2 = new Quad(vertices2, image, Colour.WHITE, Colour.MAGENTA, true, false);
@@ -91,6 +92,19 @@ void draw(){
   //  backgroundColour = #FF777700;
   //else
   //  backgroundColour = #FF000000;
+}
+
+public class OtherTest extends StencilAction{
+  public void updateStencil(){
+    if(stencilPixel == -1){
+      if(rgba[0] <= 127)
+        stencilPixel = (byte)rgba[0];
+      else
+        stencilPixel = (byte)(rgba[0]-128);
+    }
+    super.updateStencil();
+  }
+  
 }
 
 public class TestAction extends StencilAction{
