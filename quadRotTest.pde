@@ -97,10 +97,7 @@ void draw(){
 public class OtherTest extends StencilAction{
   public void updateStencil(){
     if(stencilPixel == -1){
-      if(rgba[0] <= 127)
-        stencilPixel = (byte)rgba[0];
-      else
-        stencilPixel = (byte)(rgba[0]-128);
+      stencilPixel = (byte)rgba[0];
     }
     super.updateStencil();
   }
