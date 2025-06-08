@@ -429,6 +429,7 @@ public class Quad{
       fill = r.fill;
       stroke = r.stroke;
       flags = r.flags;
+      stencil = r.stencil;
       for(byte i = 0; i < 4; i++){
         for(byte j = 0; j < 3; j++){
           vertices[i][j] = r.vertices[i][j];   
@@ -446,6 +447,7 @@ public class Quad{
     mode = r.mode;
     fill = r.fill;
     stroke = r.stroke;
+    stencil = r.stencil;
     flags = r.flags;
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
@@ -466,6 +468,7 @@ public class Quad{
       isEqual&=(fill == r.fill);
       isEqual&=(stroke == r.stroke);
       isEqual&=(flags == r.flags);
+      isEqual&=(stencil == r.stencil);
       for(byte i = 0; i < 4; i++){
         for(byte j = 0; j < 3; j++){
           isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
@@ -485,6 +488,7 @@ public class Quad{
     isEqual&=(fill == r.fill);
     isEqual&=(stroke == r.stroke);
     isEqual&=(flags == r.flags);
+    isEqual&=(stencil == r.stencil);
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
