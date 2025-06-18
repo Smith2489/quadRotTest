@@ -1,5 +1,5 @@
 public class Quad{
-  public static final int[][] TRI_INDICES = {{0, 2, 3}, {0, 1, 2}};
+  public static final int[][] TRI_INDICES = {{0, 2, 3}, {0, 1, 2}, {0, 1, 3}, {1, 2, 3}};
   public static final float[][] UV_COORDS = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
   private BillboardImg image;
   //r = replace pixels and do not draw areas where specified by billboard image

@@ -11,7 +11,7 @@ float y21 = 150;
 int backgroundColour = 0xAAAAAA;
 //float[][] vertices = {{0, 0}, {-100, -100}, {50, -50}, {100, -100}}; 
 float[][] vertices = {{-100, -50, 1, 1}, {100, -50, 1, 1}, {100, 50, 1, 1}, {-100, 50, 1, 1}};
-float[][] vertices2 = {{200, 200, 0.5, 1}, {300, 200, 5, 1}, {300, 300, 1.1, 1}, {200, 300, 0.1, 1}};
+float[][] vertices2 = {{200, 200, 0.5, 1}, {400, 100, 5, 1}, {300, 300, 1.1, 1}, {200, 300, 0.1, 1}};
 float angle = 0;
 float scale = 1;
 float angularVelocity = 0.01f;
@@ -22,7 +22,7 @@ void setup(){
   image = new BillboardImg("quadRotTest/testImage2.png");
   image.setInvisColour(0x00FF00, 0x00FF00);
   frameRate(30);
-  sprite = new Quad(vertices, image, 0x80FFFFFF, Colour.MAGENTA, true, false);
+  sprite = new Quad(vertices, image, 0xFFFFFFFF, Colour.MAGENTA, true, false);
   float[][] vertexBrightness = {{3, 1, 0, 0}, {0.25, 0, 1, 0}, {0.25f, 0, 0, 1}, {3, 1, 1, 0}};
   sprite.setVertexBrightness(vertexBrightness);
   sprite.setStencilAction(new OtherTest());

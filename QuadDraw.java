@@ -198,7 +198,37 @@ public class QuadDraw{
       float[] dists = new float[4];
       float[] adjWeights = {1, 1, 1, 1};
       boolean useImage = false;
+      boolean isSquished = false;
+      boolean shouldSwapOut = false;
+      byte side = -1;
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
+      for(byte i = 0; i < 4; i++){
+        if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
+          isSquished = true;
+          if(((i+1) & 3) == 1 || i == 1)
+            side = 1;
+          else if(((i+1) & 3) == 3 || i == 3)
+            side = 3;
+          break;
+        }
+      }
+      if(!isSquished){
+        if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
+          useImage = sprite.hasImage();
+          for(byte i = 0; i < 4; i++)
+            dists[i] = (float)Math.sqrt((vertices[i][0]-intersect[0])*(vertices[i][0]-intersect[0]) + (vertices[i][1]-intersect[1])*(vertices[i][1]-intersect[1]));
+          for(byte i = 0; i < 4; i++){
+             adjWeights[i] = 0;
+             if(dists[(i+2) & 3] > 0.0000001)
+               adjWeights[i] = (dists[i]/dists[(i+2) & 3] + 1);
+          }
+        }
+      }
+      else{
+        useImage = sprite.hasImage();
+        for(byte i = 0; i < 4; i++)
+          adjWeights[i] = 1;
+      }
       if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
         useImage = sprite.hasImage();
         for(byte s = 0; s < 4; s++)
@@ -274,7 +304,12 @@ public class QuadDraw{
                                 vertices[indices[2]][0], vertices[indices[2]][1], 
                                 xPos, yPos); 
               gamma = returnGamma(alpha, beta);
-              if(alpha < 0 || beta < 0 || gamma < 0){
+              shouldSwapOut = (alpha < 0 || beta < 0 || gamma < 0);
+              if(side == 3)
+                shouldSwapOut|=isSquished;
+              else if(side == 1)
+                shouldSwapOut&=!isSquished;
+              if(shouldSwapOut){
                 indices = Quad.TRI_INDICES[1];
                 alpha = returnAlpha(vertices[indices[0]][0], vertices[indices[0]][1], 
                                     vertices[indices[1]][0], vertices[indices[1]][1], 
@@ -485,17 +520,38 @@ public class QuadDraw{
       float[] dists = new float[4];
       float[] adjWeights = {1, 1, 1, 1};
       boolean useImage = false;
+      boolean isSquished = false;
+      boolean shouldSwapOut = false;
+      byte side = -1;
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
-      if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
-        useImage = sprite.hasImage();
-        for(byte s = 0; s < 4; s++)
-          dists[s] = (float)Math.sqrt((vertices[s][0]-intersect[0])*(vertices[s][0]-intersect[0]) + (vertices[s][1]-intersect[1])*(vertices[s][1]-intersect[1]));
-        for(byte s = 0; s < 4; s++){
-           adjWeights[s] = 0;
-           if(dists[(s+2) & 3] > 0.0000001)
-             adjWeights[s] = (dists[s]/dists[(s+2) & 3] + 1);
+      for(byte i = 0; i < 4; i++){
+        if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
+          isSquished = true;
+          if(((i+1) & 3) == 1 || i == 1)
+            side = 1;
+          else if(((i+1) & 3) == 3 || i == 3)
+            side = 3;
+          break;
         }
       }
+      if(!isSquished){
+        if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
+          useImage = sprite.hasImage();
+          for(byte i = 0; i < 4; i++)
+            dists[i] = (float)Math.sqrt((vertices[i][0]-intersect[0])*(vertices[i][0]-intersect[0]) + (vertices[i][1]-intersect[1])*(vertices[i][1]-intersect[1]));
+          for(byte i = 0; i < 4; i++){
+             adjWeights[i] = 0;
+             if(dists[(i+2) & 3] > 0.0000001)
+               adjWeights[i] = (dists[i]/dists[(i+2) & 3] + 1);
+          }
+        }
+      }
+      else{
+        useImage = sprite.hasImage();
+        for(byte i = 0; i < 4; i++)
+          adjWeights[i] = 1;
+      }
+
       
       
       //Grabbing the x-boundries and y-boundries of the quadrilateral
@@ -562,7 +618,12 @@ public class QuadDraw{
                                 vertices[indices[2]][0], vertices[indices[2]][1], 
                                 xPos, yPos); 
               gamma = returnGamma(alpha, beta);
-              if(alpha < 0 || beta < 0 || gamma < 0){
+              shouldSwapOut = (alpha < 0 || beta < 0 || gamma < 0);
+              if(side == 3)
+                shouldSwapOut|=isSquished;
+              else if(side == 1)
+                shouldSwapOut&=!isSquished;
+              if(shouldSwapOut){
                 indices = Quad.TRI_INDICES[1];
                 alpha = returnAlpha(vertices[indices[0]][0], vertices[indices[0]][1], 
                                     vertices[indices[1]][0], vertices[indices[1]][1], 
@@ -626,6 +687,7 @@ public class QuadDraw{
                 }
               }
               else{
+                draw = true;
                 brokenUpColour[0] = brokenUpFill[0];
                 brokenUpColour[1] = brokenUpFill[1];
                 brokenUpColour[2] = brokenUpFill[2];
@@ -779,9 +841,10 @@ public class QuadDraw{
   //Weight contributed by the first vertex
   public static float returnAlpha(float x1, float y1, float x2, float y2, float x3, float y3, float pX, float pY){
     float denominator = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
-    if(Math.abs(denominator) <= 0.00000001){
-      System.out.println("ERROR: DIV BY 0");
-      System.exit(1);
+    if(Math.abs(denominator) <= 0.00001){
+      return -1;
+      //System.out.println("ERROR: DIV BY 0");
+      //System.exit(1);
     }
     float numerator = (y2 - y3)*(pX - x3) + (x3 - x2)*(pY - y3);
     return numerator/denominator;
@@ -789,9 +852,10 @@ public class QuadDraw{
   //Weight contributed by the second vertex
   public static float returnBeta(float x1, float y1, float x2, float y2, float x3, float y3, float pX, float pY){
     float denominator = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
-    if(Math.abs(denominator) <= 0.000000001){
-      System.out.println("ERROR: DIV BY 0");
-      System.exit(1);
+    if(Math.abs(denominator) <= 0.00001){
+      return -1;
+      //System.out.println("ERROR: DIV BY 0");
+      //System.exit(1);
     }
     float numerator = (y3 - y1)*(pX - x3) + (x1 - x3)*(pY - y3);
     return numerator/denominator;
