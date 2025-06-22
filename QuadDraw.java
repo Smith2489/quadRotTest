@@ -163,24 +163,6 @@ public class QuadDraw{
     flags = (byte)(((sprite.hasFill()) ? flags|16 : flags&-17));
     float[][] vertices = sprite.returnVertices();
     
-    float[] invZ = new float[4];
-    if(Math.abs(vertices[0][2]*vertices[0][3]) > 0.0000001)
-      invZ[0] = 1/Math.abs(vertices[0][2]*vertices[0][3]);
-    else
-      invZ[0] = 0.0000001f;
-    if(Math.abs(vertices[1][2]*vertices[1][3]) > 0.0000001)
-      invZ[1] = 1/Math.abs(vertices[1][2]*vertices[1][3]);
-    else
-      invZ[1] = 0.0000001f;
-    if(Math.abs(vertices[2][2]*vertices[2][3]) > 0.0000001)
-      invZ[2] = 1/Math.abs(vertices[2][2]*vertices[2][3]);
-    else
-      invZ[2] = 0.0000001f;
-    if(Math.abs(vertices[3][2]*vertices[3][3]) > 0.0000001)
-      invZ[3] = 1/Math.abs(vertices[3][2]*vertices[3][3]);
-    else
-      invZ[3] = 0.0000001f;
-    
     vertices[0][2]*=(((flags & 4) >>> 1)-1);
     vertices[1][2]*=(((flags & 4) >>> 1)-1);
     vertices[2][2]*=(((flags & 4) >>> 1)-1);
@@ -200,15 +182,15 @@ public class QuadDraw{
       boolean useImage = false;
       boolean isSquished = false;
       boolean shouldSwapOut = false;
-      byte side = -1;
+      int side = -1;
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
       for(byte i = 0; i < 4; i++){
         if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
           isSquished = true;
-          if(((i+1) & 3) == 1 || i == 1)
-            side = 1;
-          else if(((i+1) & 3) == 3 || i == 3)
-            side = 3;
+          if(((i+1) & 1) == 1)
+            side = (i+1) & 3;
+          else if((i & 1) == 1)
+            side = i;
           break;
         }
       }
@@ -381,20 +363,20 @@ public class QuadDraw{
                 //Updating the pixel
                 if(draw){
                   float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
-                  adjustedAlpha*=invZ[indices[0]];
-                  adjustedBeta*=invZ[indices[1]];
-                  adjustedGamma*=invZ[indices[2]];
-                  float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma-0.0000001f;
-                  if(tempZ > 0.0000001f)
-                    tempZ = 1/tempZ-0.0000001f;
+                  adjustedAlpha*=vertices[indices[0]][2];
+                  adjustedBeta*=vertices[indices[1]][2];
+                  adjustedGamma*=vertices[indices[2]][2];
+                  float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
+                  if(Math.abs(tempZ) > 0.0000001f)
+                    tempZ = 1/tempZ;
                   else
-                    tempZ = 0.0000001f;
+                    tempZ = 0.0000001f*(((flags & 4) >>> 1)-1);
                   if(!sprite.equalTransparencies())
-                    brokenUpColour[0] = (int)(Math.min(255, brokenUpColour[0]*(tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma)))));
+                    brokenUpColour[0] = (int)(Math.min(255, brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma)))));
                   if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
-                    float[] overallBrightness = {tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
-                                                 tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
-                                                 tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
+                    float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
+                                                 Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
+                                                 Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
                     brokenUpColour[1] = (int)(Math.min(255, brokenUpColour[1]*overallBrightness[0]));
                     brokenUpColour[2] = (int)(Math.min(255, brokenUpColour[2]*overallBrightness[1]));
                     brokenUpColour[3] = (int)(Math.min(255, brokenUpColour[3]*overallBrightness[2]));
@@ -485,24 +467,6 @@ public class QuadDraw{
     flags = (byte)(((sprite.hasFill()) ? flags|16 : flags&-17));
     float[][] vertices = sprite.returnVertices();
     
-    float[] invZ = new float[4];
-    if(Math.abs(vertices[0][2]*vertices[0][3]) > 0.0000001)
-      invZ[0] = 1/Math.abs(vertices[0][2]*vertices[0][3]);
-    else
-      invZ[0] = 0.0000001f;
-    if(Math.abs(vertices[1][2]*vertices[1][3]) > 0.0000001)
-      invZ[1] = 1/Math.abs(vertices[1][2]*vertices[1][3]);
-    else
-      invZ[1] = 0.0000001f;
-    if(Math.abs(vertices[2][2]*vertices[2][3]) > 0.0000001)
-      invZ[2] = 1/Math.abs(vertices[2][2]*vertices[2][3]);
-    else
-      invZ[2] = 0.0000001f;
-    if(Math.abs(vertices[3][2]*vertices[3][3]) > 0.0000001)
-      invZ[3] = 1/Math.abs(vertices[3][2]*vertices[3][3]);
-    else
-      invZ[3] = 0.0000001f;
-    
     vertices[0][2]*=(((flags & 4) >>> 1)-1);
     vertices[1][2]*=(((flags & 4) >>> 1)-1);
     vertices[2][2]*=(((flags & 4) >>> 1)-1);
@@ -522,15 +486,15 @@ public class QuadDraw{
       boolean useImage = false;
       boolean isSquished = false;
       boolean shouldSwapOut = false;
-      byte side = -1;
+      int side = -1;
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
       for(byte i = 0; i < 4; i++){
         if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
           isSquished = true;
-          if(((i+1) & 3) == 1 || i == 1)
-            side = 1;
-          else if(((i+1) & 3) == 3 || i == 3)
-            side = 3;
+          if(((i+1) & 1) == 1)
+            side = (i+1) & 3;
+          else if((i & 1) == 1)
+            side = i;
           break;
         }
       }
@@ -696,20 +660,20 @@ public class QuadDraw{
               //Updating the pixel
               if(draw){
                 float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
-                adjustedAlpha*=invZ[indices[0]];
-                adjustedBeta*=invZ[indices[1]];
-                adjustedGamma*=invZ[indices[2]];
-                float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma-0.0000001f;
-                if(tempZ > 0.0000001f)
-                  tempZ = 1/tempZ-0.0000001f;
+                adjustedAlpha*=vertices[indices[0]][2];
+                adjustedBeta*=vertices[indices[1]][2];
+                adjustedGamma*=vertices[indices[2]][2];
+                float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
+                if(Math.abs(tempZ) > 0.0000001f)
+                  tempZ = 1/tempZ;
                 else
-                  tempZ = 0.0000001f;
+                  tempZ = 0.0000001f*(((flags & 4) >>> 4)-1);
                 if(!sprite.equalTransparencies())
-                  brokenUpColour[0] = (int)(Math.min(255, brokenUpColour[0]*(tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma)))));
+                  brokenUpColour[0] = (int)(Math.min(255, brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma)))));
                 if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
-                  float[] overallBrightness = {tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
-                                               tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
-                                               tempZ*Math.max(0, (sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
+                  float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
+                                               Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
+                                               Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
                   brokenUpColour[1] = (int)(Math.min(255, brokenUpColour[1]*overallBrightness[0]));
                   brokenUpColour[2] = (int)(Math.min(255, brokenUpColour[2]*overallBrightness[1]));
                   brokenUpColour[3] = (int)(Math.min(255, brokenUpColour[3]*overallBrightness[2]));

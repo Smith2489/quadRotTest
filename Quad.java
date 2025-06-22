@@ -7,7 +7,7 @@ public class Quad{
   //k = replace pixels; areas that are not to be replaced will be fill colour
   //u = multiply pixels; areas that are not to be replaced will be fill colour
   private char mode = 'r';
-  private float[][] vertices = new float[4][4];
+  private float[][] vertices = new float[4][3];
   private float[][] vertexBrightness = new float[4][4];
   private int fill = 0;
   private int stroke = 0;
@@ -23,7 +23,6 @@ public class Quad{
         vertexBrightness[i][j] = 1;
       }
       vertexBrightness[i][3] = 1;
-      vertices[i][3] = 1;
     }
     
     flags = 18;
@@ -39,7 +38,6 @@ public class Quad{
         vertexBrightness[i][j] = 1;
       }
       vertexBrightness[i][3] = 1;
-      vertices[i][3] = newVerts[i][3];
     }
     fill(newFill);
     stroke(newStroke);
@@ -58,7 +56,6 @@ public class Quad{
         vertexBrightness[i][j] = 1;
       }
       vertexBrightness[i][3] = 1;
-      vertices[i][3] = newVerts[i][3];
     }
     fill = 0xFFFFFFFF;
     stroke = 0xFF000000;
@@ -72,7 +69,6 @@ public class Quad{
         vertexBrightness[i][j] = 1;
       }
       vertexBrightness[i][3] = 1;
-      vertices[i][3] = newVerts[i][3];
     }
     fill(newFill);
     stroke(newStroke);
@@ -103,7 +99,6 @@ public class Quad{
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = newVertices[i][j];
       }
-      vertices[i][3] = newVertices[i][3];
     }
   }
   public void setFizzel(float newMax, float newThreshold){
@@ -279,7 +274,7 @@ public class Quad{
   }
   //Returns a specific vertex position
   public float returnVertexPosition(byte vertex, byte axis){
-     if(vertex >= 0 && vertex < 4 && axis >= 0 && axis < 3)
+     if(vertex >= 0 && vertex < 3 && axis >= 0 && axis < 3)
        return vertices[vertex][axis];
      else{
        System.out.println("ERROR: VERTEX DOES NOT EXIST");
@@ -289,10 +284,10 @@ public class Quad{
   }
   //Returns the reference to all vertices
   public float[][] returnVertices(){
-    float[][] returnVerts = {{vertices[0][0], vertices[0][1], vertices[0][2], vertices[0][3]},
-                             {vertices[1][0], vertices[1][1], vertices[1][2], vertices[1][3]},
-                             {vertices[2][0], vertices[2][1], vertices[2][2], vertices[2][3]},
-                             {vertices[3][0], vertices[3][1], vertices[3][2], vertices[3][3]}};
+    float[][] returnVerts = {{vertices[0][0], vertices[0][1], vertices[0][2]},
+                             {vertices[1][0], vertices[1][1], vertices[1][2]},
+                             {vertices[2][0], vertices[2][1], vertices[2][2]},
+                             {vertices[3][0], vertices[3][1], vertices[3][2]}};
     return returnVerts; 
   }
   
