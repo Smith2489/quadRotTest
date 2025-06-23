@@ -73,17 +73,19 @@ void draw(){
   //QuadDraw.fill(Colour.YELLOW);
   //QuadDraw.noStroke();
 
-
-  
   QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
   QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite2, (byte)5, 'g');
+  
+
 
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
   QuadDraw.setDepthWrite(false);
   //QuadDraw.setProbabilities(5, 4.5);
   QuadDraw.drawQuad(sprite, (byte)5, 'g');
+  
+
 
   //QuadDraw.drawLine(new IntWrapper(Math.round(x11)), new IntWrapper(Math.round(y11)), new IntWrapper(Math.round(x12)), new IntWrapper(Math.round(y12)), 0xFFFF00FF);
   //QuadDraw.drawLine(new IntWrapper(Math.round(x21)), new IntWrapper(Math.round(y21)), new IntWrapper(Math.round(x22)), new IntWrapper(Math.round(y22)), 0xFFFF00FF);
