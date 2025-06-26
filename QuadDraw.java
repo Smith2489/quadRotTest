@@ -174,26 +174,44 @@ public class QuadDraw{
       System.out.println("INTERSECTION");
       return;
     }
-
+    float[] denominators = {(vertices[2][1] - vertices[3][1])*(vertices[0][0] - vertices[3][0]) + (vertices[3][0] - vertices[2][0])*(vertices[0][1] - vertices[3][1]),
+                            (vertices[1][1] - vertices[2][1])*(vertices[0][0] - vertices[2][0]) + (vertices[2][0] - vertices[1][0])*(vertices[0][1] - vertices[2][1])};
+    int side = -1;    
+    boolean isSquished = false;
+    if(Math.abs(denominators[0]) <= 0.000000001 && Math.abs(denominators[1]) <= 0.000000001)
+      return;
+      
+    if(Math.abs(denominators[0]) <= 0.000000001){
+      isSquished = true;
+      side = 3;
+    }
+    if(Math.abs(denominators[1]) <= 0.000000001){
+      if(isSquished)
+        return;
+      else{
+        isSquished = true;
+        side = 1;
+      }
+    }
+    
     //Quad fill
     if((flags & 16) == 16){
       float[] dists = new float[4];
       float[] adjWeights = {1, 1, 1, 1};
       boolean useImage = false;
-      boolean isSquished = false;
       boolean shouldSwapOut = false;
-      int side = -1;
+
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
-      for(byte i = 0; i < 4; i++){
-        if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
-          isSquished = true;
-          if(((i+1) & 1) == 1)
-            side = (i+1) & 3;
-          else if((i & 1) == 1)
-            side = i;
-          break;
-        }
-      }
+      //for(byte i = 0; i < 4; i++){
+      //  if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
+      //    isSquished = true;
+      //    if(((i+1) & 1) == 1)
+      //      side = (i+1) & 3;
+      //    else if((i & 1) == 1)
+      //      side = i;
+      //    break;
+      //  }
+      //}
       if(!isSquished){
         if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
           useImage = sprite.hasImage();
@@ -205,6 +223,8 @@ public class QuadDraw{
                adjWeights[i] = (dists[i]/dists[(i+2) & 3] + 1);
           }
         }
+        else
+          return;
       }
       else{
         useImage = sprite.hasImage();
@@ -247,136 +267,123 @@ public class QuadDraw{
             t[j] = (vertices[(j+1)&3][1]-yPos)/denominator-0.0000001f;
         }
         
-        if(!(t[0] >= 0 && t[0] <= 1 && t[1] >= 0 && t[1] <= 1 && t[2] >= 0 && t[2] <= 1 && t[3] >= 0 && t[3] <= 1)){
-          //For when there are three or fewer valid edges (t is outside of the range of 0 and 1)
-          //Computing the x-position of each edge if it is valid
-          if(t[0] >= 0 && t[0] <= 1){
-            interpolatedEdges[currentEdge] = (vertices[0][0]-vertices[1][0])*t[0]+vertices[1][0]-0.0000001f;
-            currentEdge--;
-          }
-          if(t[1] >= 0 && t[1] <= 1){
-            interpolatedEdges[currentEdge] = (vertices[1][0]-vertices[2][0])*t[1]+vertices[2][0]-0.0000001f;
-            currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
-          }
-          if(t[2] >= 0 && t[2] <= 1){
-            interpolatedEdges[currentEdge] = (vertices[2][0]-vertices[3][0])*t[2]+vertices[3][0]-0.0000001f;
-            currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
-          }
-          if(t[3] >= 0 && t[3] <= 1){
-            interpolatedEdges[0] = (vertices[3][0]-vertices[0][0])*t[3]+vertices[0][0]-0.0000001f;
-          }
-          //Finding the left-most edge and right most edge and locking them to be in between the left and right of the screen
-          xBounds[0] = Math.round(Math.max(minX, Math.min(interpolatedEdges[0], interpolatedEdges[1])));
-          xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
-          //Drawing between the edges
-          for(int j = xBounds[0]; j < xBounds[1]; j++){
-            int pixelPos = i*wid+j;
-            if(stencil[pixelPos] == 0 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){ 
-              float xPos = j+0.5f; //The centre-x of the pixel
-              boolean draw = true;//Determines if the current pixel should be updated
-              int[] indices = Quad.TRI_INDICES[0];
+        //For when there are three or fewer valid edges (t is outside of the range of 0 and 1)
+        //Computing the x-position of each edge if it is valid
+        if(t[0] >= 0 && t[0] <= 1){
+          interpolatedEdges[currentEdge] = (vertices[0][0]-vertices[1][0])*t[0]+vertices[1][0]-0.0000001f;
+          currentEdge--;
+        }
+        if(t[1] >= 0 && t[1] <= 1){
+          interpolatedEdges[currentEdge] = (vertices[1][0]-vertices[2][0])*t[1]+vertices[2][0]-0.0000001f;
+          currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
+        }
+        if(t[2] >= 0 && t[2] <= 1){
+          interpolatedEdges[currentEdge] = (vertices[2][0]-vertices[3][0])*t[2]+vertices[3][0]-0.0000001f;
+          currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
+        }
+        if(t[3] >= 0 && t[3] <= 1){
+          interpolatedEdges[0] = (vertices[3][0]-vertices[0][0])*t[3]+vertices[0][0]-0.0000001f;
+        }
+        //Finding the left-most edge and right most edge and locking them to be in between the left and right of the screen
+        xBounds[0] = Math.round(Math.max(minX, Math.min(interpolatedEdges[0], interpolatedEdges[1])));
+        xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
+        //Drawing between the edges
+        for(int j = xBounds[0]; j < xBounds[1]; j++){
+          int pixelPos = i*wid+j;
+          if(stencil[pixelPos] == 0 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){ 
+             float xPos = j+0.5f; //The centre-x of the pixel
+             boolean draw = true;//Determines if the current pixel should be updated
+             int[] indices = Quad.TRI_INDICES[0];
               
-              //Computing the weights of the current triangle
-              alpha = returnAlpha(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                  vertices[indices[1]][0], vertices[indices[1]][1], 
-                                  vertices[indices[2]][0], vertices[indices[2]][1], 
-                                   xPos, yPos); 
-              beta = returnBeta(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                vertices[indices[1]][0], vertices[indices[1]][1], 
-                                vertices[indices[2]][0], vertices[indices[2]][1], 
-                                xPos, yPos); 
-              gamma = returnGamma(alpha, beta);
-              shouldSwapOut = (alpha < 0 || beta < 0 || gamma < 0);
-              if(side == 3)
-                shouldSwapOut|=isSquished;
-              else if(side == 1)
-                shouldSwapOut&=!isSquished;
-              if(shouldSwapOut){
-                indices = Quad.TRI_INDICES[1];
-                alpha = returnAlpha(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                    vertices[indices[1]][0], vertices[indices[1]][1], 
-                                    vertices[indices[2]][0], vertices[indices[2]][1], 
-                                     xPos, yPos); 
-                beta = returnBeta(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                  vertices[indices[1]][0], vertices[indices[1]][1], 
-                                  vertices[indices[2]][0], vertices[indices[2]][1], 
-                                  xPos, yPos); 
-                gamma = returnGamma(alpha, beta);
-              }
+             //Computing the weights of the current triangle
+             alpha = ((vertices[indices[1]][1] - vertices[indices[2]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[2]][0] - vertices[indices[1]][0])*(yPos - vertices[indices[2]][1]))/denominators[0];
+             beta = ((vertices[indices[2]][1] - vertices[indices[0]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[0]][0] - vertices[indices[2]][0])*(yPos - vertices[indices[2]][1]))/denominators[0];
+             gamma = 1-alpha-beta;
+             shouldSwapOut = (alpha < 0 || beta < 0 || gamma < 0);
+             if(side == 3)
+               shouldSwapOut|=isSquished;
+             else if(side == 1)
+               shouldSwapOut&=!isSquished;
+             if(shouldSwapOut){
+               indices = Quad.TRI_INDICES[1];
+               alpha = ((vertices[indices[1]][1] - vertices[indices[2]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[2]][0] - vertices[indices[1]][0])*(yPos - vertices[indices[2]][1]))/denominators[1];
+               beta = ((vertices[indices[2]][1] - vertices[indices[0]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[0]][0] - vertices[indices[2]][0])*(yPos - vertices[indices[2]][1]))/denominators[1];
+               gamma = 1-alpha-beta;
+             }
   
-              float adjustedAlpha = adjWeights[indices[0]]*alpha;
-              float adjustedBeta = adjWeights[indices[1]]*beta;
-              float adjustedGamma = adjWeights[indices[2]]*gamma;
-              if(useImage){
-                float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
-                if(overallWeight > 0.0000001)
-                  overallWeight = 1/overallWeight;
-                else
-                  overallWeight = 0.0000001f;
-                //Finding the UV coordinates of the texture in the current triangle
-                float u = ((Quad.UV_COORDS[indices[0]][0]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][0]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][0]*adjustedGamma))*overallWeight;
-                float v = ((Quad.UV_COORDS[indices[0]][1]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][1]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][1]*adjustedGamma))*overallWeight;
-                u = Math.abs(u - (int)(u));
-                v = Math.abs(v - (int)(v));
+             float adjustedAlpha = adjWeights[indices[0]]*alpha;
+             float adjustedBeta = adjWeights[indices[1]]*beta;
+             float adjustedGamma = adjWeights[indices[2]]*gamma;
+             if(useImage){
+               float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
+               if(overallWeight > 0.0000001)
+                 overallWeight = 1/overallWeight;
+               else
+                 overallWeight = 0.0000001f;
+               //Finding the UV coordinates of the texture in the current triangle
+               float u = ((Quad.UV_COORDS[indices[0]][0]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][0]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][0]*adjustedGamma))*overallWeight;
+               float v = ((Quad.UV_COORDS[indices[0]][1]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][1]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][1]*adjustedGamma))*overallWeight;
+               u = Math.abs(u - (int)(u));
+               v = Math.abs(v - (int)(v));
           
-                //Converting from UV coordinates to the real coordinates in the image
-                int imgX = Math.round(u*sprite.returnImageWidth()-0.5f);
-                int imgY = Math.round(v*sprite.returnImageHeight()-0.5f);
+               //Converting from UV coordinates to the real coordinates in the image
+               int imgX = Math.round(u*sprite.returnImageWidth()-0.5f);
+               int imgY = Math.round(v*sprite.returnImageHeight()-0.5f);
                 
-                //Grabbing the colour of the current pixel in the image
-                draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
-                int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
-                //Breaking up the colours the image into their component RGB channels
+               //Grabbing the colour of the current pixel in the image
+               draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
+               int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
+               //Breaking up the colours the image into their component RGB channels
         
-                brokenUpSprite[0] = (spritePixel >>> 16) & 0xFF;
-                brokenUpSprite[1] = (spritePixel >>> 8) & 0xFF;
-                brokenUpSprite[2] = spritePixel & 0xFF;
-                if(draw){
-                   if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
-                     //Multiplying the fill's channels by the image's channels
-                     brokenUpColour[0] = (int)(brokenUpFill[0]);
-                     brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[1]*Colour.INV_255); 
-                     brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[2]*Colour.INV_255); 
-                     brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[3]*Colour.INV_255);
-                   }
-                   else{
-                      brokenUpColour[0] = 0xFF;
-                      brokenUpColour[1] = brokenUpSprite[0];
-                      brokenUpColour[2] = brokenUpSprite[1];
-                      brokenUpColour[3] = brokenUpSprite[2];
-                    }
+               brokenUpSprite[0] = (spritePixel >>> 16) & 0xFF;
+               brokenUpSprite[1] = (spritePixel >>> 8) & 0xFF;
+               brokenUpSprite[2] = spritePixel & 0xFF;
+               if(draw){
+                 if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
+                    //Multiplying the fill's channels by the image's channels
+                    brokenUpColour[0] = (int)(brokenUpFill[0]);
+                    brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[1]*Colour.INV_255); 
+                    brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[2]*Colour.INV_255); 
+                    brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[3]*Colour.INV_255);
                   }
-                  if(!draw && (sprite.returnMode() == 'u' || sprite.returnMode() == 'k')){
-                    draw = true;
-                    brokenUpColour[0] = brokenUpFill[0];
-                    brokenUpColour[1] = brokenUpFill[1];
-                    brokenUpColour[2] = brokenUpFill[2];
-                    brokenUpColour[3] = brokenUpFill[3];
+                  else{
+                    brokenUpColour[0] = 0xFF;
+                    brokenUpColour[1] = brokenUpSprite[0];
+                    brokenUpColour[2] = brokenUpSprite[1];
+                    brokenUpColour[3] = brokenUpSprite[2];
                   }
                 }
-                else{
-                  brokenUpColour[0] = brokenUpFill[0];
-                  brokenUpColour[1] = brokenUpFill[1];
-                  brokenUpColour[2] = brokenUpFill[2]; //<>//
-                  brokenUpColour[3] = brokenUpFill[3];
+                if(!draw && (sprite.returnMode() == 'u' || sprite.returnMode() == 'k')){
+                   draw = true;
+                   brokenUpColour[0] = brokenUpFill[0];
+                   brokenUpColour[1] = brokenUpFill[1];
+                   brokenUpColour[2] = brokenUpFill[2];
+                   brokenUpColour[3] = brokenUpFill[3];
                 }
-                //Updating the pixel
-                if(draw){
-                  float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
-                  adjustedAlpha*=vertices[indices[0]][2];
-                  adjustedBeta*=vertices[indices[1]][2];
-                  adjustedGamma*=vertices[indices[2]][2];
-                  float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
-                  if(Math.abs(tempZ) > 0.0000001f)
-                    tempZ = 1/tempZ;
-                  else
-                    tempZ = 0.0000001f*(((flags & 4) >>> 1)-1);
-                  if(!sprite.equalTransparencies())
-                    brokenUpColour[0] = (Math.min(255, Math.round(brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma))))));
-                  if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
-                    float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
-                                                 Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)), //<>//
-                                                 Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
+              }
+              else{
+                brokenUpColour[0] = brokenUpFill[0];
+                brokenUpColour[1] = brokenUpFill[1];
+                brokenUpColour[2] = brokenUpFill[2];
+                brokenUpColour[3] = brokenUpFill[3];
+              }
+              //Updating the pixel
+              if(draw){
+                float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
+                adjustedAlpha*=vertices[indices[0]][2];
+                adjustedBeta*=vertices[indices[1]][2];
+                adjustedGamma*=vertices[indices[2]][2];
+                float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
+                if(Math.abs(tempZ) > 0.0000001f)
+                  tempZ = 1/tempZ; //<>//
+                else
+                  tempZ = 0.0000001f*(((flags & 4) >>> 1)-1);
+                if(!sprite.equalTransparencies())
+                  brokenUpColour[0] = (Math.min(255, Math.round(brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma))))));
+                if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
+                  float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
+                                               Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
+                                               Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
                     brokenUpColour[1] = Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0]));
                     brokenUpColour[2] = Math.min(255, Math.round(brokenUpColour[2]*overallBrightness[1]));
                     brokenUpColour[3] = Math.min(255, Math.round(brokenUpColour[3]*overallBrightness[2]));
@@ -395,51 +402,9 @@ public class QuadDraw{
                   Colour.interpolateColours(brokenUpFrame, brokenUpColour);
                   if(brokenUpFrame[0] > minTransparency)
                     frame[pixelPos] = (brokenUpFrame[0] << 24)|(brokenUpFrame[1] << 16)|(brokenUpFrame[2] << 8)|brokenUpFrame[3];
-                }
               }
             }
           }
-        }
-        else{
-           //For when all edges are valid (in the range of 0 and 1)
-           //Computing the x-position of each edge
-           interpolatedEdges[0] = (vertices[0][0]-vertices[1][0])*t[0]+vertices[1][0]-0.00001f;
-           interpolatedEdges[1] = (vertices[1][0]-vertices[2][0])*t[1]+vertices[2][0]-0.00001f;
-           interpolatedEdges[2] = (vertices[2][0]-vertices[3][0])*t[2]+vertices[3][0]-0.00001f;
-           interpolatedEdges[3] = (vertices[3][0]-vertices[0][0])*t[3]+vertices[0][0]-0.00001f;
-           //Sorting the edges to be in left-to-right order using insertion sort
-           for(byte j = 1; j < 4; j++){
-             for(byte s = j; s > 0; s--){
-               float tempEdge = interpolatedEdges[s-1];
-               if(tempEdge >= interpolatedEdges[s]){
-                 interpolatedEdges[s-1] = interpolatedEdges[s];
-                 interpolatedEdges[s] = tempEdge;
-               }
-             }
-           }
-           //Restricting the edges to be within the screen
-           interpolatedEdges[0] = Math.max(0, Math.min(interpolatedEdges[0], wid));
-           interpolatedEdges[1] = Math.max(0, Math.min(interpolatedEdges[1], wid));
-           interpolatedEdges[2] = Math.max(0, Math.min(interpolatedEdges[2], wid));
-           interpolatedEdges[3] = Math.max(0, Math.min(interpolatedEdges[3], wid));
-           //Drawing from the left-most to second left-most edge
-           xBounds[0] = Math.round(interpolatedEdges[0]);
-           xBounds[1] = Math.round(interpolatedEdges[1]);
-           for(int j = xBounds[0]; j < xBounds[1]; j++){
-            if((fill >>> 24) < 0xFF)
-              frame[i*wid+j] = Colour.interpolateColours(fill, frame[i*wid+j]); 
-            else
-              frame[i*wid+j] = fill;
-           }
-           //Drawing from the second right-most to the right-most edge
-           xBounds[0] = Math.round(interpolatedEdges[2]);
-           xBounds[1] = Math.round(interpolatedEdges[3]);
-           for(int j = xBounds[0]; j < xBounds[1]; j++){
-             if((fill >>> 24) < 0xFF)
-               frame[i*wid+j] = Colour.interpolateColours(fill, frame[i*wid+j]); 
-             else
-               frame[i*wid+j] = fill;
-           }
         }
       }
     }
@@ -466,6 +431,7 @@ public class QuadDraw{
     flags = (byte)(((sprite.hasStroke()) ? flags|8 : flags&-9));
     flags = (byte)(((sprite.hasFill()) ? flags|16 : flags&-17));
     float[][] vertices = sprite.returnVertices();
+
     
     vertices[0][2]*=(((flags & 4) >>> 1)-1);
     vertices[1][2]*=(((flags & 4) >>> 1)-1);
@@ -478,26 +444,35 @@ public class QuadDraw{
       System.out.println("INTERSECTION");
       return;
     }
-
+    boolean isSquished = false;
+    int side = -1;
+    float[] denominators = {(vertices[2][1] - vertices[3][1])*(vertices[0][0] - vertices[3][0]) + (vertices[3][0] - vertices[2][0])*(vertices[0][1] - vertices[3][1]),
+                            (vertices[1][1] - vertices[2][1])*(vertices[0][0] - vertices[2][0]) + (vertices[2][0] - vertices[1][0])*(vertices[0][1] - vertices[2][1])};
+    
+    if(Math.abs(denominators[0]) <= 0.000000001 && Math.abs(denominators[1]) <= 0.000000001)
+      return;
+    
+    if(Math.abs(denominators[0]) <= 0.000000001){
+      isSquished = true;
+      side = 3;
+    }
+    if(Math.abs(denominators[1]) <= 0.000000001){
+      if(isSquished)
+        return;
+      else{
+        isSquished = true;
+        side = 1;
+      }
+    }
+    
     //Quad fill
     if((flags & 16) == 16){
       float[] dists = new float[4];
       float[] adjWeights = {1, 1, 1, 1};
       boolean useImage = false;
-      boolean isSquished = false;
+
       boolean shouldSwapOut = false;
-      int side = -1;
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
-      for(byte i = 0; i < 4; i++){
-        if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
-          isSquished = true;
-          if(((i+1) & 1) == 1)
-            side = (i+1) & 3;
-          else if((i & 1) == 1)
-            side = i;
-          break;
-        }
-      }
       if(!isSquished){
         if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
           useImage = sprite.hasImage();
@@ -508,6 +483,9 @@ public class QuadDraw{
              if(dists[(i+2) & 3] > 0.0000001)
                adjWeights[i] = (dists[i]/dists[(i+2) & 3] + 1);
           }
+        }
+        else{
+          return;
         }
       }
       else{
@@ -542,141 +520,128 @@ public class QuadDraw{
             t[j] = (vertices[(j+1)&3][1]-yPos)/denominator-0.0000001f;
         }
         
-        if(!(t[0] >= 0 && t[0] <= 1 && t[1] >= 0 && t[1] <= 1 && t[2] >= 0 && t[2] <= 1 && t[3] >= 0 && t[3] <= 1)){
-          //For when there are three or fewer valid edges (t is outside of the range of 0 and 1)
-          //Computing the x-position of each edge if it is valid
-          if(t[0] >= 0 && t[0] <= 1){
-            interpolatedEdges[currentEdge] = (vertices[0][0]-vertices[1][0])*t[0]+vertices[1][0]-0.0000001f;
-            currentEdge--;
-          }
-          if(t[1] >= 0 && t[1] <= 1){
-            interpolatedEdges[currentEdge] = (vertices[1][0]-vertices[2][0])*t[1]+vertices[2][0]-0.0000001f;
-            currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
-          }
-          if(t[2] >= 0 && t[2] <= 1){
-            interpolatedEdges[currentEdge] = (vertices[2][0]-vertices[3][0])*t[2]+vertices[3][0]-0.0000001f;
-            currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
-          }
-          if(t[3] >= 0 && t[3] <= 1){
-            interpolatedEdges[0] = (vertices[3][0]-vertices[0][0])*t[3]+vertices[0][0]-0.0000001f;
-          }
-          //Finding the left-most edge and right most edge and locking them to be in between the left and right of the screen
-          xBounds[0] = Math.round(Math.max(minX, Math.min(interpolatedEdges[0], interpolatedEdges[1])));
-          xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
-          //Drawing between the edges
-          for(int j = xBounds[0]; j < xBounds[1]; j++){
-            int pixelPos = i*wid+j;
-            stencilTest(pixelPos, compVal, testType);
-            if((flags & 1) == 1 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){ 
-              float xPos = j+0.5f; //The centre-x of the pixel
-              boolean draw = true;//Determines if the current pixel should be updated
-              int[] indices = Quad.TRI_INDICES[0];
+        //For when there are three or fewer valid edges (t is outside of the range of 0 and 1)
+        //Computing the x-position of each edge if it is valid
+        if(t[0] >= 0 && t[0] <= 1){
+          interpolatedEdges[currentEdge] = (vertices[0][0]-vertices[1][0])*t[0]+vertices[1][0]-0.0000001f;
+          currentEdge--;
+        }
+        if(t[1] >= 0 && t[1] <= 1){
+          interpolatedEdges[currentEdge] = (vertices[1][0]-vertices[2][0])*t[1]+vertices[2][0]-0.0000001f;
+          currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
+        }
+        if(t[2] >= 0 && t[2] <= 1){
+          interpolatedEdges[currentEdge] = (vertices[2][0]-vertices[3][0])*t[2]+vertices[3][0]-0.0000001f;
+          currentEdge = (byte)((currentEdge <= 0) ? 0 : currentEdge-1);
+        }
+        if(t[3] >= 0 && t[3] <= 1){
+           interpolatedEdges[0] = (vertices[3][0]-vertices[0][0])*t[3]+vertices[0][0]-0.0000001f;
+        }
+        //Finding the left-most edge and right most edge and locking them to be in between the left and right of the screen
+        xBounds[0] = Math.round(Math.max(minX, Math.min(interpolatedEdges[0], interpolatedEdges[1])));
+        xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
+        //Drawing between the edges
+        for(int j = xBounds[0]; j < xBounds[1]; j++){
+          int pixelPos = i*wid+j;
+          stencilTest(pixelPos, compVal, testType);
+          if((flags & 1) == 1 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){ 
+            float xPos = j+0.5f; //The centre-x of the pixel
+            boolean draw = true;//Determines if the current pixel should be updated
+            int[] indices = Quad.TRI_INDICES[0];
               
-              //Computing the weights of the current triangle
-              alpha = returnAlpha(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                  vertices[indices[1]][0], vertices[indices[1]][1], 
-                                  vertices[indices[2]][0], vertices[indices[2]][1], 
-                                   xPos, yPos); 
-              beta = returnBeta(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                vertices[indices[1]][0], vertices[indices[1]][1], 
-                                vertices[indices[2]][0], vertices[indices[2]][1], 
-                                xPos, yPos); 
-              gamma = returnGamma(alpha, beta);
-              shouldSwapOut = (alpha < 0 || beta < 0 || gamma < 0);
-              if(side == 3)
-                shouldSwapOut|=isSquished;
-              else if(side == 1)
-                shouldSwapOut&=!isSquished;
-              if(shouldSwapOut){
-                indices = Quad.TRI_INDICES[1];
-                alpha = returnAlpha(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                    vertices[indices[1]][0], vertices[indices[1]][1], 
-                                    vertices[indices[2]][0], vertices[indices[2]][1], 
-                                     xPos, yPos); 
-                beta = returnBeta(vertices[indices[0]][0], vertices[indices[0]][1], 
-                                  vertices[indices[1]][0], vertices[indices[1]][1], 
-                                  vertices[indices[2]][0], vertices[indices[2]][1], 
-                                  xPos, yPos); 
-                gamma = returnGamma(alpha, beta);
-              }
+            //Computing the weights of the current triangle
+            alpha = ((vertices[indices[1]][1] - vertices[indices[2]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[2]][0] - vertices[indices[1]][0])*(yPos - vertices[indices[2]][1]))/denominators[0];
+            beta = ((vertices[indices[2]][1] - vertices[indices[0]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[0]][0] - vertices[indices[2]][0])*(yPos - vertices[indices[2]][1]))/denominators[0];
+            gamma = 1-alpha-beta;
+            shouldSwapOut = (alpha < 0 || beta < 0 || gamma < 0);
+            if(side == 3)
+              shouldSwapOut|=isSquished;
+            else if(side == 1)
+              shouldSwapOut&=!isSquished;
+            if(shouldSwapOut){
+              indices = Quad.TRI_INDICES[1];
+              alpha = ((vertices[indices[1]][1] - vertices[indices[2]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[2]][0] - vertices[indices[1]][0])*(yPos - vertices[indices[2]][1]))/denominators[1];
+              beta = ((vertices[indices[2]][1] - vertices[indices[0]][1])*(xPos - vertices[indices[2]][0]) + (vertices[indices[0]][0] - vertices[indices[2]][0])*(yPos - vertices[indices[2]][1]))/denominators[1];
+              gamma = 1-alpha-beta;
+            }
   
-              float adjustedAlpha = adjWeights[indices[0]]*alpha;
-              float adjustedBeta = adjWeights[indices[1]]*beta;
-              float adjustedGamma = adjWeights[indices[2]]*gamma;
-              if(useImage){
-                float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
-                if(overallWeight > 0.0000001)
-                  overallWeight = 1/overallWeight;
-                else
-                  overallWeight = 0.0000001f;
-                //Finding the UV coordinates of the texture in the current triangle
-                float u = ((Quad.UV_COORDS[indices[0]][0]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][0]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][0]*adjustedGamma))*overallWeight;
-                float v = ((Quad.UV_COORDS[indices[0]][1]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][1]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][1]*adjustedGamma))*overallWeight;
-                u = Math.abs(u - (int)(u));
-                v = Math.abs(v - (int)(v));
+            float adjustedAlpha = adjWeights[indices[0]]*alpha;
+            float adjustedBeta = adjWeights[indices[1]]*beta;
+            float adjustedGamma = adjWeights[indices[2]]*gamma;
+            if(useImage){
+              float overallWeight = alpha*adjWeights[indices[0]]+beta*adjWeights[indices[1]]+gamma*adjWeights[indices[2]];
+              if(overallWeight > 0.0000001)
+                overallWeight = 1/overallWeight;
+              else
+                overallWeight = 0.0000001f;
+              //Finding the UV coordinates of the texture in the current triangle
+              float u = ((Quad.UV_COORDS[indices[0]][0]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][0]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][0]*adjustedGamma))*overallWeight;
+              float v = ((Quad.UV_COORDS[indices[0]][1]*adjustedAlpha)+(Quad.UV_COORDS[indices[1]][1]*adjustedBeta)+(Quad.UV_COORDS[indices[2]][1]*adjustedGamma))*overallWeight;
+              u = Math.abs(u - (int)(u));
+              v = Math.abs(v - (int)(v));
           
-                //Converting from UV coordinates to the real coordinates in the image
-                int imgX = Math.round(u*sprite.returnImageWidth()-0.5f);
-                int imgY = Math.round(v*sprite.returnImageHeight()-0.5f);
+              //Converting from UV coordinates to the real coordinates in the image
+              int imgX = Math.round(u*sprite.returnImageWidth()-0.5f);
+              int imgY = Math.round(v*sprite.returnImageHeight()-0.5f);
                 
-                //Grabbing the colour of the current pixel in the image
-                draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
-                int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
-                //Breaking up the colours the image into their component RGB channels
+              //Grabbing the colour of the current pixel in the image
+              draw = sprite.shouldDrawPixel(imgX+sprite.returnImageWidth()*imgY) || sprite.hasRemoval();
+              int spritePixel = sprite.returnPixels()[imgX+sprite.returnImageWidth()*imgY];
+              //Breaking up the colours the image into their component RGB channels
         
-                brokenUpSprite[0] = (spritePixel >>> 16) & 0xFF;
-                brokenUpSprite[1] = (spritePixel >>> 8) & 0xFF;
-                brokenUpSprite[2] = spritePixel & 0xFF;
-               if(draw){
-                 if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
-                    //Multiplying the fill's channels by the image's channels
-                    brokenUpColour[0] = (int)(brokenUpFill[0]);
-                    brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[1]*Colour.INV_255); 
-                    brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[2]*Colour.INV_255); 
-                    brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[3]*Colour.INV_255);
-                  }
-                  else{
-                    brokenUpColour[0] = 0xFF;
-                    brokenUpColour[1] = brokenUpSprite[0];
-                    brokenUpColour[2] = brokenUpSprite[1];
-                    brokenUpColour[3] = brokenUpSprite[2];
-                  }
+              brokenUpSprite[0] = (spritePixel >>> 16) & 0xFF;
+              brokenUpSprite[1] = (spritePixel >>> 8) & 0xFF;
+              brokenUpSprite[2] = spritePixel & 0xFF;
+              if(draw){
+                if(sprite.returnMode() == 'm' || sprite.returnMode() == 'u'){
+                  //Multiplying the fill's channels by the image's channels
+                  brokenUpColour[0] = (int)(brokenUpFill[0]);
+                  brokenUpColour[1] = (int)(brokenUpSprite[0]*brokenUpFill[1]*Colour.INV_255); 
+                  brokenUpColour[2] = (int)(brokenUpSprite[1]*brokenUpFill[2]*Colour.INV_255); 
+                  brokenUpColour[3] = (int)(brokenUpSprite[2]*brokenUpFill[3]*Colour.INV_255);
                 }
-                if(!draw && (sprite.returnMode() == 'u' || sprite.returnMode() == 'k')){
-                  draw = true;
-                  brokenUpColour[0] = brokenUpFill[0];
-                  brokenUpColour[1] = brokenUpFill[1];
-                  brokenUpColour[2] = brokenUpFill[2];
-                  brokenUpColour[3] = brokenUpFill[3];
+                else{
+                  brokenUpColour[0] = 0xFF;
+                  brokenUpColour[1] = brokenUpSprite[0];
+                  brokenUpColour[2] = brokenUpSprite[1];
+                  brokenUpColour[3] = brokenUpSprite[2];
                 }
               }
-              else{
+              if(!draw && (sprite.returnMode() == 'u' || sprite.returnMode() == 'k')){
                 draw = true;
                 brokenUpColour[0] = brokenUpFill[0];
                 brokenUpColour[1] = brokenUpFill[1];
                 brokenUpColour[2] = brokenUpFill[2];
                 brokenUpColour[3] = brokenUpFill[3];
               }
-              //Updating the pixel
-              if(draw){
-                float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
-                adjustedAlpha*=vertices[indices[0]][2];
-                adjustedBeta*=vertices[indices[1]][2];
-                adjustedGamma*=vertices[indices[2]][2];
-                float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
-                if(Math.abs(tempZ) > 0.0000001f)
-                  tempZ = 1/tempZ;
-                else
-                  tempZ = 0.0000001f*(((flags & 4) >>> 4)-1);
-                if(!sprite.equalTransparencies())
-                  brokenUpColour[0] = (Math.min(255, Math.round(brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma))))));
-                if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
-                  float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
-                                               Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
-                                               Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
-                  brokenUpColour[1] = (Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0])));
-                  brokenUpColour[2] = (Math.min(255, Math.round(brokenUpColour[2]*overallBrightness[1])));
-                  brokenUpColour[3] = (Math.min(255, Math.round(brokenUpColour[3]*overallBrightness[2])));
+            }
+            else{
+              draw = true;
+              brokenUpColour[0] = brokenUpFill[0];
+              brokenUpColour[1] = brokenUpFill[1];
+              brokenUpColour[2] = brokenUpFill[2];
+              brokenUpColour[3] = brokenUpFill[3];
+            }
+            //Updating the pixel
+            if(draw){
+              float z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
+              adjustedAlpha*=vertices[indices[0]][2];
+              adjustedBeta*=vertices[indices[1]][2];
+              adjustedGamma*=vertices[indices[2]][2];
+              float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
+              if(Math.abs(tempZ) > 0.0000001f)
+                tempZ = 1/tempZ;
+              else
+                tempZ = 0.0000001f*(((flags & 4) >>> 4)-1);
+              if(!sprite.equalTransparencies())
+                brokenUpColour[0] = (Math.min(255, Math.round(brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma))))));
+              if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
+                float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
+                                             Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
+                                             Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
+                 brokenUpColour[1] = (Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0])));
+                 brokenUpColour[2] = (Math.min(255, Math.round(brokenUpColour[2]*overallBrightness[1])));
+                 brokenUpColour[3] = (Math.min(255, Math.round(brokenUpColour[3]*overallBrightness[2])));
                 }
                 int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
                 if(((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos] || Float.isNaN(zBuff[pixelPos]))){
@@ -695,48 +660,7 @@ public class QuadDraw{
               }
             }
           }
-        }
-        else{
-           //For when all edges are valid (in the range of 0 and 1)
-           //Computing the x-position of each edge
-           interpolatedEdges[0] = (vertices[0][0]-vertices[1][0])*t[0]+vertices[1][0]-0.00001f;
-           interpolatedEdges[1] = (vertices[1][0]-vertices[2][0])*t[1]+vertices[2][0]-0.00001f;
-           interpolatedEdges[2] = (vertices[2][0]-vertices[3][0])*t[2]+vertices[3][0]-0.00001f;
-           interpolatedEdges[3] = (vertices[3][0]-vertices[0][0])*t[3]+vertices[0][0]-0.00001f;
-           //Sorting the edges to be in left-to-right order using insertion sort
-           for(byte j = 1; j < 4; j++){
-             for(byte s = j; s > 0; s--){
-               float tempEdge = interpolatedEdges[s-1];
-               if(tempEdge >= interpolatedEdges[s]){
-                 interpolatedEdges[s-1] = interpolatedEdges[s];
-                 interpolatedEdges[s] = tempEdge;
-               }
-             }
-           }
-           //Restricting the edges to be within the screen
-           interpolatedEdges[0] = Math.max(0, Math.min(interpolatedEdges[0], wid));
-           interpolatedEdges[1] = Math.max(0, Math.min(interpolatedEdges[1], wid));
-           interpolatedEdges[2] = Math.max(0, Math.min(interpolatedEdges[2], wid));
-           interpolatedEdges[3] = Math.max(0, Math.min(interpolatedEdges[3], wid));
-           //Drawing from the left-most to second left-most edge
-           xBounds[0] = Math.round(interpolatedEdges[0]);
-           xBounds[1] = Math.round(interpolatedEdges[1]);
-           for(int j = xBounds[0]; j < xBounds[1]; j++){
-            if((fill >>> 24) < 0xFF)
-              frame[i*wid+j] = Colour.interpolateColours(fill, frame[i*wid+j]); 
-            else
-              frame[i*wid+j] = fill;
-           }
-           //Drawing from the second right-most to the right-most edge
-           xBounds[0] = Math.round(interpolatedEdges[2]);
-           xBounds[1] = Math.round(interpolatedEdges[3]);
-           for(int j = xBounds[0]; j < xBounds[1]; j++){
-             if((fill >>> 24) < 0xFF)
-               frame[i*wid+j] = Colour.interpolateColours(fill, frame[i*wid+j]); 
-             else
-               frame[i*wid+j] = fill;
-           }
-        }
+        
       }
     }
     //Quad stroke
@@ -801,34 +725,7 @@ public class QuadDraw{
     stencil[pixelPos] = tempAction.returnStencilValue();
     return (colour[0] << 24)|(colour[1] << 16)|(colour[2] << 8)|colour[3];
   }
-  //Baarycentric coordinates
-  //Weight contributed by the first vertex
-  public static float returnAlpha(float x1, float y1, float x2, float y2, float x3, float y3, float pX, float pY){
-    float denominator = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
-    if(Math.abs(denominator) <= 0.00001){
-      return -1;
-      //System.out.println("ERROR: DIV BY 0");
-      //System.exit(1);
-    }
-    float numerator = (y2 - y3)*(pX - x3) + (x3 - x2)*(pY - y3);
-    return numerator/denominator;
-  }
-  //Weight contributed by the second vertex
-  public static float returnBeta(float x1, float y1, float x2, float y2, float x3, float y3, float pX, float pY){
-    float denominator = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
-    if(Math.abs(denominator) <= 0.00001){
-      return -1;
-      //System.out.println("ERROR: DIV BY 0");
-      //System.exit(1);
-    }
-    float numerator = (y3 - y1)*(pX - x3) + (x1 - x3)*(pY - y3);
-    return numerator/denominator;
-  }
-  //Weight contributed by the third vertex (exploits how Barycentric coordinates all add up to one)
-  public static float returnGamma(float alpha, float beta){
-     return 1-alpha-beta; 
-  }
-  
+
   private static void interpLine(IntWrapper p1, IntWrapper p2, IntWrapper oldP1, IntWrapper oldP2, int oldOppP1, int oldOppP2, int farEdge){
     float t1 = -1;
     float t2 = -1;
