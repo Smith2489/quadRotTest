@@ -202,16 +202,7 @@ public class QuadDraw{
       boolean shouldSwapOut = false;
 
       float[] intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
-      //for(byte i = 0; i < 4; i++){
-      //  if(Math.abs(vertices[(i+1) & 3][0] - vertices[i][0]) <= 0.000001 && Math.abs(vertices[(i+1) & 3][1] - vertices[i][1]) <= 0.000001){
-      //    isSquished = true;
-      //    if(((i+1) & 1) == 1)
-      //      side = (i+1) & 3;
-      //    else if((i & 1) == 1)
-      //      side = i;
-      //    break;
-      //  }
-      //}
+
       if(!isSquished){
         if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
           useImage = sprite.hasImage();
@@ -375,7 +366,7 @@ public class QuadDraw{
                 adjustedGamma*=vertices[indices[2]][2];
                 float tempZ = adjustedAlpha+adjustedBeta+adjustedGamma;
                 if(Math.abs(tempZ) > 0.0000001f)
-                  tempZ = 1/tempZ; //<>//
+                  tempZ = 1/tempZ;
                 else
                   tempZ = 0.0000001f*(((flags & 4) >>> 1)-1);
                 if(!sprite.equalTransparencies())
@@ -384,7 +375,7 @@ public class QuadDraw{
                   float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
                                                Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
                                                Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
-                    brokenUpColour[1] = Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0]));
+                    brokenUpColour[1] = Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0])); //<>//
                     brokenUpColour[2] = Math.min(255, Math.round(brokenUpColour[2]*overallBrightness[1]));
                     brokenUpColour[3] = Math.min(255, Math.round(brokenUpColour[3]*overallBrightness[2]));
                   }
