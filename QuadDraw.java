@@ -241,6 +241,14 @@ public class QuadDraw{
                        Math.round(Math.min(heig, Math.max(vertices[0][1], Math.max(vertices[1][1], Math.max(vertices[2][1], vertices[3][1])))))};
       int minX = xBounds[0];
       int maxX = xBounds[1];
+      float[] denominator = {0, 0, 0, 0};
+      for(byte i = 0; i < 4; i++){
+        denominator[i] = vertices[(i+1)&3][1]-vertices[i][1]-0.0000001f;
+        if(Math.abs(denominator[i]) > 0.0000001f)
+          denominator[i] = 1/denominator[i];
+        else
+          denominator[i] = Float.NaN;
+      }
       //Stores the x-location of the interpolated edges
       float[] interpolatedEdges = {0, 0, 0, 0};
       for(int i = yBounds[0]; i < yBounds[1]; i++){
@@ -253,9 +261,7 @@ public class QuadDraw{
         
         //Computing all four t values
         for(byte j = 0; j < 4; j++){
-          float denominator = vertices[(j+1)&3][1]-vertices[j][1]-0.0000001f;
-          if(Math.abs(denominator) > 0.0000001f)
-            t[j] = (vertices[(j+1)&3][1]-yPos)/denominator-0.0000001f;
+            t[j] = (vertices[(j+1)&3][1]-yPos)*denominator[j]-0.0000001f;
         }
         
         //For when there are three or fewer valid edges (t is outside of the range of 0 and 1)
@@ -278,6 +284,7 @@ public class QuadDraw{
         //Finding the left-most edge and right most edge and locking them to be in between the left and right of the screen
         xBounds[0] = Math.round(Math.max(minX, Math.min(interpolatedEdges[0], interpolatedEdges[1])));
         xBounds[1] = Math.round(Math.min(maxX, Math.max(interpolatedEdges[0], interpolatedEdges[1])));
+
         //Drawing between the edges
         for(int j = xBounds[0]; j < xBounds[1]; j++){
           int pixelPos = i*wid+j;
@@ -368,14 +375,14 @@ public class QuadDraw{
                 if(Math.abs(tempZ) > 0.0000001f)
                   tempZ = 1/tempZ;
                 else
-                  tempZ = 0.0000001f*(((flags & 4) >>> 1)-1);
+                  tempZ = 0.0000001f*(((flags & 4) >>> 1)-1); //<>//
                 if(!sprite.equalTransparencies())
                   brokenUpColour[0] = (Math.min(255, Math.round(brokenUpColour[0]*(Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][0]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][0]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][0]*adjustedGamma))))));
                 if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
                   float[] overallBrightness = {Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][1]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][1]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][1]*adjustedGamma)),
                                                Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][2]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][2]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][2]*adjustedGamma)),
                                                Math.max(0, tempZ*(sprite.returnVertexBrightness()[indices[0]][3]*adjustedAlpha+sprite.returnVertexBrightness()[indices[1]][3]*adjustedBeta+sprite.returnVertexBrightness()[indices[2]][3]*adjustedGamma))};
-                    brokenUpColour[1] = Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0])); //<>//
+                    brokenUpColour[1] = Math.min(255, Math.round(brokenUpColour[1]*overallBrightness[0]));
                     brokenUpColour[2] = Math.min(255, Math.round(brokenUpColour[2]*overallBrightness[1]));
                     brokenUpColour[3] = Math.min(255, Math.round(brokenUpColour[3]*overallBrightness[2]));
                   }
@@ -494,6 +501,14 @@ public class QuadDraw{
                        Math.round(Math.min(heig, Math.max(vertices[0][1], Math.max(vertices[1][1], Math.max(vertices[2][1], vertices[3][1])))))};
       int minX = xBounds[0];
       int maxX = xBounds[1];
+      float[] denominator = {0, 0, 0, 0};
+      for(byte i = 0; i < 4; i++){
+        denominator[i] = vertices[(i+1)&3][1]-vertices[i][1]-0.0000001f;
+        if(Math.abs(denominator[i]) > 0.0000001f)
+          denominator[i] = 1/denominator[i];
+        else
+          denominator[i] = Float.NaN;
+      }
       //Stores the x-location of the interpolated edges
       float[] interpolatedEdges = {0, 0, 0, 0};
       for(int i = yBounds[0]; i < yBounds[1]; i++){
@@ -505,11 +520,8 @@ public class QuadDraw{
         float[] t = {-1, -1, -1, -1};
         
         //Computing all four t values
-        for(byte j = 0; j < 4; j++){
-          float denominator = vertices[(j+1)&3][1]-vertices[j][1]-0.0000001f;
-          if(Math.abs(denominator) > 0.0000001f)
-            t[j] = (vertices[(j+1)&3][1]-yPos)/denominator-0.0000001f;
-        }
+        for(byte j = 0; j < 4; j++)
+          t[j] = (vertices[(j+1)&3][1]-yPos)*denominator[j]-0.0000001f;
         
         //For when there are three or fewer valid edges (t is outside of the range of 0 and 1)
         //Computing the x-position of each edge if it is valid
