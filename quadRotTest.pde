@@ -1,4 +1,4 @@
-BillboardImg image;
+Graphic image;
 float x11 = 15;
 float x12 = 500;
 float y11 = 500;
@@ -9,8 +9,8 @@ float x21 = 50;
 float y21 = 150;
 
 int backgroundColour = 0xAAAAAA;
-//float[][] vertices = {{0, 0, 1}, {-100, -100, 1}, {50, -50, 1}, {100, -100, 1}}; 
-float[][] vertices = {{-100, -50, 1}, {100, -50, 1}, {100, 50, 1}, {-100, 50, 1}};
+//float[][] vertices = {{-100, -50, 1}, {100, -50, 1}, {100, 50, 1}, {-100, 50, 1}};
+float[][] vertices = {{-200, -100, 1}, {200, -100, 1}, {200, 100, 1}, {-200, 100, 1}};
 float[][] vertices2 = {{200, 200, 0.5}, {400, 100, 5}, {300, 300, 1.1}, {200, 300, 0.1}};
 float angle = 0;
 float scale = 1;
@@ -19,7 +19,7 @@ Quad sprite;
 Quad sprite2;
 void setup(){
   size(800, 600);
-  image = new BillboardImg("quadRotTest/testImage2.png");
+  image = new Graphic("quadRotTest/testImage2.png");
   image.setInvisColour(0x00FF00, 0x00FF00);
   frameRate(30);
   sprite = new Quad(vertices, image, 0x80FFFFFF, Colour.MAGENTA, true, false);
@@ -72,7 +72,7 @@ void draw(){
   //QuadDraw.stroke(Colour.MAGENTA);
   //QuadDraw.fill(Colour.YELLOW);
   //QuadDraw.noStroke();
-
+  System.out.println(sprite.equalColour());
   QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
   QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite2, (byte)5, 'g');

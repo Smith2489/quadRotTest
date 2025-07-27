@@ -1,12 +1,12 @@
-import java.io.File;
+import java.io.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-public class BillboardImg {
+public class Graphic {
     private int[] img = new int[10000];
     private int width = 100;
     private int height = 100;
     private int[] removalColour = {0xFF00FF, 0xFF00FF}; //Pixels of this colour will be skipped
-    public BillboardImg(){
+    public Graphic(){
         width = 100;
         height = 100;
         removalColour[0] = 0xFF00FF;
@@ -15,25 +15,27 @@ public class BillboardImg {
         for(int i = 0; i < 10000; i++)
             img[i] = 0xFF000000;
     }
-    public BillboardImg(String imagePath){
+    public Graphic(String imagePath){
         File file = new File(imagePath);
         try{
           BufferedImage sprite = ImageIO.read(file);
           width = sprite.getWidth();
           height = sprite.getHeight();
           img = new int[width*height];
-          for(int i = 0; i < width; i++)
-            for(int j = 0; j < height; j++)
-              img[j*width+i] = sprite.getRGB(i, j);
+          for(int i = 0; i < width; i++){
+            for(int j = 0; j < height; j++){
+              img[i+width*j] = sprite.getRGB(i, j);
+            }
+          }
         }
-        catch(Exception e){
+        catch(IOException e){
           System.out.println("ERROR: FILE "+imagePath+" NOT FOUND OR IS INVALID");
           System.exit(1);
         }
         removalColour[0] = 0xFF00FF;
         removalColour[1] = 0xFF00FF;
       }
-      public BillboardImg(int[] newImage, int newWidth, int newHeight){
+      public Graphic(int[] newImage, int newWidth, int newHeight){
         if(newWidth*newHeight != newImage.length){
             System.out.println("ERROR: DIMENSIONS DO NOT MATCH");
             System.exit(1);
@@ -41,8 +43,10 @@ public class BillboardImg {
         img = new int[newImage.length];
         width = newWidth;
         height = newHeight;
-        for(int i = 0; i < newImage.length; i++)
-          img[i] = newImage[i];
+        for(int i = 0; i < width; i++){
+          for(int j = 0; j < height; j++)
+            img[i+width*j] = newImage[i+width*j];
+        }
         removalColour[0] = 0xFF00FF;
         removalColour[1] = 0xFF00FF;
       }
@@ -50,14 +54,16 @@ public class BillboardImg {
         File file = new File(imagePath);
         try{
           BufferedImage sprite = ImageIO.read(file);
-          width = sprite.getWidth();
-          height = sprite.getHeight();
+          width = (short)(sprite.getWidth() & 0xFFFFFFFF);
+          height = (short)(sprite.getHeight() & 0xFFFFFFFF);
           img = new int[width*height];
-          for(int i = 0; i < width; i++)
-            for(int j = 0; j < height; j++)
-              img[j*width+i] = sprite.getRGB(i, j);
+          for(short i = 0; i < width; i++){
+            for(short j = 0; j < height; j++){
+              img[i+width*j] = sprite.getRGB(i, j);
+            }
+          }
         }
-        catch(Exception e){
+        catch(IOException e){
           System.out.println("ERROR: FILE "+imagePath+" NOT FOUND OR IS INVALID");
           System.exit(1);
         }
@@ -70,8 +76,10 @@ public class BillboardImg {
         img = new int[newImage.length];
         width = newWidth;
         height = newHeight;
-        for(int i = 0; i < newImage.length; i++)
-          img[i] = newImage[i];
+        for(int i = 0; i < width; i++){
+          for(int j = 0; j < height; j++)
+            img[i+width*j] = newImage[i+width*j];
+        }
       }
       public void setInvisColour(int invisColour1, int invisColour2){
         invisColour1&=0xFFFFFF;
@@ -101,7 +109,10 @@ public class BillboardImg {
       public int returnInvisColour(byte index){
         return removalColour[index];
       }
-      public boolean shouldDrawPixel(int pixelIndex){
+      
+
+      public boolean shouldDrawPixel(int x, int y){
+        int pixelIndex = x+width*y;
         int[] tempR = {(removalColour[0] >>> 16) & 0xFF, (removalColour[1] >>> 16) & 0xFF, (img[pixelIndex] >>> 16) & 0xFF};
         int[] edgeR = {Math.min(tempR[0], tempR[1]), Math.max(tempR[0], tempR[1])};
         int[] tempG = {(removalColour[0] >>> 8) & 0xFF, (removalColour[1] >>> 8) & 0xFF, (img[pixelIndex] >>> 8) & 0xFF};
@@ -115,16 +126,16 @@ public class BillboardImg {
       }
 
       public boolean equals(Object o){
-        if(o instanceof BillboardImg){
-          BillboardImg b = (BillboardImg)o;
+        if(o instanceof Graphic){
+          Graphic g = (Graphic)o;
           boolean isEqual = true;
-          isEqual&=(width == b.width);
-          isEqual&=(height == b.height);
-          isEqual&=(removalColour == b.removalColour);
-          isEqual&=(img.length == b.img.length);
+          isEqual&=(width == g.width);
+          isEqual&=(height == g.height);
+          isEqual&=(removalColour == g.removalColour);
+          isEqual&=(img.length == g.img.length);
           if(isEqual)
             for(int i = 0; i < img.length; i++){
-              if(img[i] != b.img[i])
+              if(img[i] != g.img[i])
                 return false;
             }
           return isEqual;
@@ -132,36 +143,36 @@ public class BillboardImg {
         else
           return false;
       }
-      public boolean equals(BillboardImg b){
+      public boolean equals(Graphic g){
         boolean isEqual = true;
-        isEqual&=(width == b.width);
-        isEqual&=(height == b.height);
-        isEqual&=(removalColour == b.removalColour);
-        isEqual&=(img.length == b.img.length);
+        isEqual&=(width == g.width);
+        isEqual&=(height == g.height);
+        isEqual&=(removalColour == g.removalColour);
+        isEqual&=(img.length == g.img.length);
         if(isEqual)
           for(int i = 0; i < img.length; i++){
-            if(img[i] != b.img[i])
+            if(img[i] != g.img[i])
               return false;
           }
         return isEqual;
       }
       public void copy(Object o){
-        if(o instanceof BillboardImg){
-          BillboardImg b = (BillboardImg)o;
-          width = b.width;
-          height = b.height;
-          removalColour = b.removalColour;
-          img = new int[b.img.length];
+        if(o instanceof Graphic){
+          Graphic g = (Graphic)o;
+          width = g.width;
+          height = g.height;
+          removalColour = g.removalColour;
+          img = new int[g.img.length];
           for(int i = 0; i < img.length; i++)
-            img[i] = b.img[i];
+            img[i] = g.img[i];
         }
       }
-      public void copy(BillboardImg b){
-        width = b.width;
-        height = b.height;
-        removalColour = b.removalColour;
-        img = new int[b.img.length];
+      public void copy(Graphic g){
+        width = g.width;
+        height = g.height;
+        removalColour = g.removalColour;
+        img = new int[g.img.length];
         for(int i = 0; i < img.length; i++)
-          img[i] = b.img[i];
+          img[i] = g.img[i];
       }
 }
