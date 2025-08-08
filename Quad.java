@@ -1,5 +1,5 @@
-public class Quad{
-  public static final int[][] TRI_INDICES = {{0, 2, 3}, {0, 1, 2}, {0, 1, 3}, {1, 2, 3}};
+public class Quad extends FilledParent{
+  public static final int[][] TRI_INDICES = {{0, 2, 3}, {0, 1, 2}};
   private Graphic image;
   //r = replace pixels and do not draw areas where specified by graphic
   //m = multiply pixels and do not draw areas where specified by graphic
@@ -8,14 +8,12 @@ public class Quad{
   private char mode = 'r';
   private float[][] vertices = new float[4][3];
   private float[][] vertexBrightness = new float[4][4];
-  private int fill = 0;
-  private int stroke = 0;
-  private byte flags = 48; //0 = has stroke, 1 = has fill, 2 = Removal enable, 3 = depth Write, 4 = equal transparencies, 5 = equal colour
-  private float maxFizzel = 1;
-  private float fizzelThreshold = 1.1f;
-  private StencilAction stencil = new StencilAction();
+  //Flag bits
+  //5 = Removal enable, 
+  //6 = parallel sides equal length
   
   public Quad(){
+    super((byte)92);
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = 0;
@@ -23,14 +21,10 @@ public class Quad{
       }
       vertexBrightness[i][3] = 1;
     }
-    
-    flags = 50;
-    fill = 0xFFFFFFFF;
-    stroke = 0xFF000000;
-    stencil = new StencilAction();
   }
   
   public Quad(float[][] newVerts, int newFill, int newStroke, boolean hasFill, boolean hasStroke){
+    super(newStroke, newFill, hasStroke, hasFill);
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = newVerts[i][j];
@@ -38,17 +32,16 @@ public class Quad{
       }
       vertexBrightness[i][3] = 1;
     }
-    fill(newFill);
-    stroke(newStroke);
-    flags = 48;
-    if(hasFill)
-      flags|=2;
-    if(hasStroke)
-      flags|=1;
-    stencil = new StencilAction();
+    float[] diffX = {Math.abs(vertices[1][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[3][0]),
+                     Math.abs(vertices[3][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[1][0])};
+    float[] diffY = {Math.abs(vertices[1][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[3][1]),
+                     Math.abs(vertices[3][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[1][1])};
+    if(diffX[0] <= 0.0001 && diffY[0] <= 0.0001 && diffX[1] <= 0.0001 && diffY[1] <= 0.0001)
+      flags|=64;
+    flags|=24;
   }
   public Quad(float[][] newVerts, Graphic img){
-    flags = 50;
+    super((byte)28);
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = newVerts[i][j];
@@ -56,12 +49,16 @@ public class Quad{
       }
       vertexBrightness[i][3] = 1;
     }
-    fill = 0xFFFFFFFF;
-    stroke = 0xFF000000;
+    float[] diffX = {Math.abs(vertices[1][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[3][0]),
+                     Math.abs(vertices[3][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[1][0])};
+    float[] diffY = {Math.abs(vertices[1][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[3][1]),
+                     Math.abs(vertices[3][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[1][1])};
+    if(diffX[0] <= 0.0001 && diffY[0] <= 0.0001 && diffX[1] <= 0.0001 && diffY[1] <= 0.0001)
+      flags|=64;
     image = img;
-    stencil = new StencilAction();
   }
   public Quad(float[][] newVerts, Graphic img, int newFill, int newStroke, boolean hasFill, boolean hasStroke){
+    super(newStroke, newFill, hasStroke, hasFill);
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = newVerts[i][j];
@@ -69,27 +66,18 @@ public class Quad{
       }
       vertexBrightness[i][3] = 1;
     }
-    fill(newFill);
-    stroke(newStroke);
-    flags = 48;
-    if(hasFill)
-      flags|=2;
-    if(hasStroke)
-      flags|=1;
+    float[] diffX = {Math.abs(vertices[1][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[3][0]),
+                     Math.abs(vertices[3][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[1][0])};
+    float[] diffY = {Math.abs(vertices[1][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[3][1]),
+                     Math.abs(vertices[3][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[1][1])};
+    if(diffX[0] <= 0.0001 && diffY[0] <= 0.0001 && diffX[1] <= 0.0001 && diffY[1] <= 0.0001)
+      flags|=64;
+    flags|=24;
     image = img;
-    stencil = new StencilAction();
   }
 
   public void setImage(Graphic img){
     image = img;
-  }
-  
-  public void setStencilAction(StencilAction newAction){
-    stencil = newAction;
-  }
-  
-  public StencilAction returnStencilActionPtr(){
-    return stencil;
   }
   
   //Setting the rect's vertices
@@ -99,96 +87,19 @@ public class Quad{
         vertices[i][j] = newVertices[i][j];
       }
     }
-  }
-  public void setFizzel(float newMax, float newThreshold){
-    maxFizzel = newMax;
-    fizzelThreshold = newThreshold;
-  }
-  public float returnMaxFizzel(){
-    return maxFizzel;
-  }
-  public float returnFizzelThreshold(){
-    return fizzelThreshold;
-  } 
-  
-  //Setting the fill colour of the rect
-  public void fill(short r, short g, short b){
-    flags|=2;
-    r&=0xFF;
-    g&=0xFF;
-    b&=0xFF;
-    fill = 0xFF000000|(r << 16)|(g << 8)|b;
-  }
-  public void fill(short r, short g, short b, short a){
-    flags|=2;
-    r&=0xFF;
-    g&=0xFF;
-    b&=0xFF;
-    a&=0xFF;
-    fill = (a << 24)|(r << 16)|(g << 8)|b;
-  }
-  public void fill(int colour){
-    flags|=2;
-    if((colour >>> 24) == 0){
-      if(colour <= 0xFF)
-          colour = 0xFF000000 | (colour << 16) | (colour << 8) | colour;
-      else if(colour <= 0xFFFF)
-          colour = ((colour & 0xFF00) << 16) | ((colour & 0xFF) << 16) | ((colour & 0xFF) << 8) | (colour & 0xFF);
-      else
-          colour = 0xFF000000 | colour;
-    }
-    fill = colour;
-  }
-  public void fill(int colour, short alpha){
-    flags|=2;
-    alpha&=0xFF;
-    colour = (colour & 0xFFFFFF);
-    if(colour > 0xFF)
-      fill = (alpha << 24)|colour;
+    float[] diffX = {Math.abs(vertices[1][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[3][0]),
+                     Math.abs(vertices[3][0] - vertices[0][0])-Math.abs(vertices[2][0]-vertices[1][0])};
+    float[] diffY = {Math.abs(vertices[1][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[3][1]),
+                     Math.abs(vertices[3][1] - vertices[0][1])-Math.abs(vertices[2][1]-vertices[1][1])};
+
+    if(diffX[0] <= 0.0001 && diffY[0] <= 0.0001 && diffX[1] <= 0.0001 && diffY[1] <= 0.0001)
+      flags|=64;
     else
-      fill = (alpha << 24)|(colour << 16)|(colour << 8)|colour;
+      flags&=-65;
   }
   
-  //Setting the stroke colour of the rect
-  public void stroke(short r, short g, short b){
-    flags|=1;
-    r&=0xFF;
-    g&=0xFF;
-    b&=0xFF;
-    stroke = 0xFF000000|(r << 16)|(g << 8)|b;
-  }
-  public void stroke(short r, short g, short b, short a){
-    flags|=1;
-    r&=0xFF;
-    g&=0xFF;
-    b&=0xFF;
-    a&=0xFF;
-    stroke = (a << 24)|(r << 16)|(g << 8)|b;
-  }
-  public void stroke(int colour){
-    flags|=1;
-    if((colour >>> 24) == 0){
-      if(colour <= 0xFF)
-          colour = 0xFF000000 | (colour << 16) | (colour << 8) | colour;
-      else if(colour <= 0xFFFF)
-          colour = ((colour & 0xFF00) << 16) | ((colour & 0xFF) << 16) | ((colour & 0xFF) << 8) | (colour & 0xFF);
-      else
-          colour = 0xFF000000 | colour;
-    }
-    stroke = colour;
-  }
-  public void stroke(int colour, short alpha){
-    flags|=1;
-    alpha&=0xFF;
-    colour = (colour & 0xFFFFFF);
-   if(colour > 0xFF)
-      stroke = (alpha << 24)|colour;
-    else
-      stroke = (alpha << 24)|(colour << 16)|(colour << 8)|colour;
-  }
   public void setMode(char newMode){
     switch(newMode){
-      case 'r':
       case 'm':
       case 'k':
       case 'u':
@@ -198,67 +109,29 @@ public class Quad{
         mode = 'r';
     }
   }
-  
+
   public void setRemoval(boolean removalEnable){
     if(removalEnable)
-      flags|=4;
+      flags|=32;
     else
-      flags&=-5;
+      flags&=-33;
   }
 
-  //Selecting having no fill
-  public void noFill(){
-    flags&=-3;
-  }
-  //Selecting having no stroke
-  public void noStroke(){
-    flags&=-2;
-  }
-  
-  //Should disable depth write if noDraw in billboards is enabled and enable depth write if noDraw is disabled
-  public void setDepthWrite(boolean depthWrite){
-    if(depthWrite)
-      flags|=8;
-    else
-      flags&=-9;
-  }
-  
-  //Returns if the rect has its fill enabled
-  public boolean hasFill(){
-    return (flags & 2) == 2;
-  }
-  //Returns if the rect has its stroke enabled
-  public boolean hasStroke(){
-    return (flags & 1) == 1;
-  }
   public boolean hasRemoval(){
-    return (flags & 4) == 4;
-  }
-  public boolean getHasDepthWrite(){
-    return (flags & 8) == 8;
-  }
-  
-  public boolean equalTransparencies(){
-    return (flags & 16) == 16;
-  }
-
-  public boolean equalColour(){
     return (flags & 32) == 32;
   }
   
-  //Returns the fill of the rect
-  public int returnFill(){
-    return fill;
+  public boolean isRectangle(){
+    return (flags & 64) == 64;
   }
-  //Returns the stroke of the rect
-  public int returnStroke(){
-    return stroke;
-  }
+
   public char returnMode(){
     return mode;
   }
   public int[] returnPixels(){
-    return image.returnPixels();
+    if(image != null)
+      return image.returnPixels();
+    return null;
   }
   public boolean hasImage(){
     return image != null;
@@ -267,17 +140,23 @@ public class Quad{
     return image.returnInvisColour((byte)0);
   }
   public boolean shouldDrawPixel(int x, int y){
-    return image.shouldDrawPixel(x, y) || (flags & 4) == 4;
+    return image.shouldDrawPixel(x, y) || (flags & 32) == 32;
   }
   public int returnImageWidth(){
-    return image.returnWidth();
+    if(image != null)
+      return image.returnWidth();
+    else
+      return 0;
   }
   public int returnImageHeight(){
-    return image.returnHeight();
+    if(image != null)
+      return image.returnHeight();
+    else
+      return 0;
   }
   //Returns a specific vertex position
-  public float returnVertexPosition(byte vertex, byte axis){
-     if(vertex >= 0 && vertex < 3 && axis >= 0 && axis < 3)
+  public float getVertexPosition(byte vertex, byte axis){
+     if(vertex >= 0 && vertex <= 3 && axis >= 0 && axis < 3)
        return vertices[vertex][axis];
      else{
        System.out.println("ERROR: VERTEX DOES NOT EXIST");
@@ -286,7 +165,7 @@ public class Quad{
      }
   }
   //Returns the reference to all vertices
-  public float[][] returnVertices(){
+  public float[][] getVertices(){
     float[][] returnVerts = {{vertices[0][0], vertices[0][1], vertices[0][2]},
                              {vertices[1][0], vertices[1][1], vertices[1][2]},
                              {vertices[2][0], vertices[2][1], vertices[2][2]},
@@ -295,19 +174,19 @@ public class Quad{
   }
   
   //Returns centre position
-  public float getAverageX(){
+  public float returnX(){
     return (vertices[0][0]+vertices[1][0]+vertices[2][0]+vertices[3][0])*0.25f; 
   }
   
-  public float getAverageY(){
+  public float returnY(){
     return (vertices[0][1]+vertices[1][1]+vertices[2][1]+vertices[3][1])*0.25f;
   }
   
-  public float getAverageZ(){
+  public float returnZ(){
     return (vertices[0][2]+vertices[1][2]+vertices[2][2]+vertices[3][2])*0.25f;
   }
 
-  public float[] getCentroid(){
+  public float[] returnPosition(){
     float[] centroid = {(vertices[0][0]+vertices[1][0]+vertices[2][0]+vertices[3][0])*0.25f,
                         (vertices[0][1]+vertices[1][1]+vertices[2][1]+vertices[3][1])*0.25f,
                         (vertices[0][2]+vertices[1][2]+vertices[2][2]+vertices[3][2])*0.25f};
@@ -324,14 +203,14 @@ public class Quad{
                             Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
                             Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
     if(transparency[0] <= 0.0001)
+      flags|=8;
+    else
+      flags&=-9;
+
+    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
       flags|=16;
     else
       flags&=-17;
-
-    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
-      flags|=32;
-    else
-      flags&=-33;
   }
   
   public void setVertexBrightness(float a, float r, float g, float b, byte index){
@@ -339,11 +218,16 @@ public class Quad{
     vertexBrightness[index][1] = r;
     vertexBrightness[index][2] = g;
     vertexBrightness[index][3] = b;
-    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0]), 
-                            Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0]),
-                            Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0]),
-                            Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0])};
-    if(transparency[0] <= 0.0001 && transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
+    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0])+Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0])+Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0])+Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0]),
+                            Math.abs(vertexBrightness[0][1]-vertexBrightness[1][1])+Math.abs(vertexBrightness[1][1]-vertexBrightness[2][1])+Math.abs(vertexBrightness[2][1]-vertexBrightness[3][1])+Math.abs(vertexBrightness[3][1]-vertexBrightness[0][1]),
+                            Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
+                            Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
+    if(transparency[0] <= 0.0001)
+      flags|=8;
+    else
+      flags&=-9;
+
+    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
       flags|=16;
     else
       flags&=-17;
@@ -368,14 +252,14 @@ public class Quad{
                             Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
                             Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
     if(transparency[0] <= 0.0001)
+      flags|=8;
+    else
+      flags&=-9;
+      
+    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
       flags|=16;
     else
       flags&=-17;
-      
-    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
-      flags|=32;
-    else
-      flags&=-33;
   }
 
   public void setVertexBrightness(float[][] brightnessLevels){
@@ -404,14 +288,14 @@ public class Quad{
                             Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
                             Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
     if(transparency[0] <= 0.0001)
+      flags|=8;
+    else
+      flags&=-9;
+      
+    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
       flags|=16;
     else
       flags&=-17;
-      
-    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
-      flags|=32;
-    else
-      flags&=-33;
   }
   
   
@@ -444,12 +328,9 @@ public class Quad{
   public void copy(Object o){
     if(o instanceof Quad){
       Quad r = (Quad)o;
+      super.copy(r);
       image = r.image;
       mode = r.mode;
-      fill = r.fill;
-      stroke = r.stroke;
-      flags = r.flags;
-      stencil = r.stencil;
       for(byte i = 0; i < 4; i++){
         for(byte j = 0; j < 3; j++){
           vertices[i][j] = r.vertices[i][j];   
@@ -463,12 +344,9 @@ public class Quad{
   }
   
   public void copy(Quad r){
+    super.copy(r);
     image = r.image;
     mode = r.mode;
-    fill = r.fill;
-    stroke = r.stroke;
-    stencil = r.stencil;
-    flags = r.flags;
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
         vertices[i][j] = r.vertices[i][j];   
@@ -482,19 +360,15 @@ public class Quad{
   public boolean equals(Object o){
     if(o instanceof Quad){
       Quad r = (Quad)o;
-      boolean isEqual = true;
+      boolean isEqual = super.equals(r);
       isEqual&=(image.equals(r.image));
       isEqual&=(mode == r.mode);
-      isEqual&=(fill == r.fill);
-      isEqual&=(stroke == r.stroke);
-      isEqual&=(flags == r.flags);
-      isEqual&=(stencil == r.stencil);
       for(byte i = 0; i < 4; i++){
         for(byte j = 0; j < 3; j++){
-          isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
-          isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= 0.0001);  
+          isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= EPSILON);  
+          isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= EPSILON);  
         }
-        isEqual&=(Math.abs(vertexBrightness[i][3] - r.vertexBrightness[i][3]) <= 0.0001);
+        isEqual&=(Math.abs(vertexBrightness[i][3] - r.vertexBrightness[i][3]) <= EPSILON);
       }
       return isEqual;
     }
@@ -502,19 +376,15 @@ public class Quad{
       return false;
   }
   public boolean equals(Quad r){
-    boolean isEqual = true;
+    boolean isEqual = super.equals(r);
     isEqual&=(image.equals(r.image));
     isEqual&=(mode == r.mode);
-    isEqual&=(fill == r.fill);
-    isEqual&=(stroke == r.stroke);
-    isEqual&=(flags == r.flags);
-    isEqual&=(stencil == r.stencil);
     for(byte i = 0; i < 4; i++){
       for(byte j = 0; j < 3; j++){
-        isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= 0.0001);  
-        isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= 0.0001);  
+        isEqual&=(Math.abs(vertices[i][j] - r.vertices[i][j]) <= EPSILON);  
+        isEqual&=(Math.abs(vertexBrightness[i][j] - r.vertexBrightness[i][j]) <= EPSILON);  
       }
-      isEqual&=(Math.abs(vertexBrightness[i][3] - r.vertexBrightness[i][3]) <= 0.0001);
+      isEqual&=(Math.abs(vertexBrightness[i][3] - r.vertexBrightness[i][3]) <= EPSILON);
     }
     return isEqual;
   }

@@ -9,7 +9,7 @@ float x21 = 50;
 float y21 = 150;
 
 int backgroundColour = 0xAAAAAA;
-//float[][] vertices = {{-100, -50, 1}, {100, -50, 1}, {100, 50, 1}, {-100, 50, 1}};
+//float[][] vertices = {{-100, -50, 1}, {100, -50, 1}, {-50, 50, 1}, {-100, 50, 1}};
 float[][] vertices = {{-200, -100, 1}, {200, -100, 1}, {200, 100, 1}, {-200, 100, 1}};
 float[][] vertices2 = {{200, 200, 0.5}, {400, 100, 5}, {300, 300, 1.1}, {200, 300, 0.1}};
 float angle = 0;
@@ -72,7 +72,6 @@ void draw(){
   //QuadDraw.stroke(Colour.MAGENTA);
   //QuadDraw.fill(Colour.YELLOW);
   //QuadDraw.noStroke();
-  System.out.println(sprite.equalColour());
   QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
   QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite2, (byte)5, 'g');
