@@ -1,5 +1,5 @@
 public abstract class FilledParent extends DispParent{
-    //Flag bits: bit 1 = has stroke, bit 2 = has fill, bit 3 = equal transparencies, bit 4 = equal colour
+    //Flag bits: bit 1 = has stroke, bit 2 = has fill
     protected int fill = 0xFFFFFFFF;
     protected float maxFizzel = 1;
     protected float fizzelThreshold = 1.1f;
@@ -121,7 +121,6 @@ public abstract class FilledParent extends DispParent{
         return fill; 
     }
     
-
     //Returns if the triangle has a stroke
     public boolean getHasStroke(){
         return (flags & 2) == 2;
@@ -131,14 +130,6 @@ public abstract class FilledParent extends DispParent{
     public boolean getHasFill(){
         return (flags & 4) == 4;
     }
-
-    public boolean equalTransparencies(){
-        return (flags & 8) == 8;
-    }
-
-    public boolean equalColour(){
-        return (flags & 16) == 16;
-    } 
 
     public void setFizzel(float newMax, float newThreshold){
         maxFizzel = newMax;

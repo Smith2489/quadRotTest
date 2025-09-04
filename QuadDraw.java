@@ -1,3 +1,5 @@
+import java.util.*;
+import java.io.*;
 public class QuadDraw{
   private static final float EPSILON = 0.0000001f;
   private static int minTransparency = 0;
@@ -14,11 +16,12 @@ public class QuadDraw{
   private static int[] brokenUpColour = {0, 0, 0, 0}; //Temporary storage for the final pixel colour
   private static int[] brokenUpFill = {0, 0, 0, 0}; //Holds the component RGB channels of the fill
   private static int[] brokenUpSprite = {0, 0, 0};
-  private static float maxProbability = 1;
   private static float threshold = 1.1f;
   private static StencilAction tempAction = new StencilAction();
   private static int wid = 100;
   private static int heig = 100;
+  private static int meshSize = 2;
+  private static boolean[] mesh = {true, false, false, true};
 
 
   public static void setFrame(int[] newFrame, int width, int height){
@@ -33,6 +36,80 @@ public class QuadDraw{
     }
   }
   
+  public static void useMeshTransparency(){
+    flags|=-128;
+  }
+
+  public static boolean loadTransparencyMesh(String file){
+    boolean failed = false;
+    File newMesh = new File(file);
+    try{
+      Scanner fileReader = new Scanner(newMesh);
+      while(!failed){
+        if(fileReader.hasNextLine()){
+          Scanner stringReader = new Scanner(fileReader.nextLine());
+          if(stringReader.hasNextInt()){
+            meshSize = stringReader.nextInt();
+            stringReader.close();
+            break;
+          }
+          else if(stringReader.hasNext() && stringReader.next().charAt(0) != '#')
+            failed = true;
+          stringReader.close();
+        }
+        else
+          failed = true;
+      }
+      if(meshSize < 2)
+        failed = true;
+      if(!failed){
+        int meshIndex = 0;
+        mesh = new boolean[meshSize*meshSize];
+        while(!failed && fileReader.hasNext() && meshIndex < mesh.length){
+          if(fileReader.hasNextInt()){
+            switch(fileReader.nextInt()){
+              case 0:
+                mesh[meshIndex] = false;
+                break;
+              case 1:
+                mesh[meshIndex] = true;
+                break;
+              default:
+                failed = true;
+            }
+            meshIndex++;
+          }
+          else{
+            if(fileReader.next().contains("#"))
+              fileReader.nextLine();
+            else
+              failed = true;
+          }
+        }
+        for(; meshIndex < mesh.length; meshIndex++)
+          mesh[meshIndex] = true;
+      }
+      fileReader.close();
+    }
+    catch(Exception e){
+      System.out.println("ERROR: FILE "+file+" NOT FOUND OR IS INVALID");
+      e.printStackTrace();
+      failed = true;
+    }
+    if(failed){
+      meshSize = 2;
+      mesh = new boolean[4];
+      mesh[0] = true;
+      mesh[1] = false;
+      mesh[2] = false;
+      mesh[3] = true;
+    }
+    return !failed;
+  }
+  public static void useAlphaTransparency(){
+    flags&=127;
+  }
+
   //Setting the fill of the current rect
   public static void fill(short r, short g, short b){
     flags|=16;
@@ -146,8 +223,10 @@ public class QuadDraw{
   }
   
   public static void setProbabilities(float newMax, float newThreshold){
-    maxProbability = newMax;
-    threshold = newThreshold;
+    if(newMax < -EPSILON || newMax > EPSILON)
+      threshold = Math.abs(newThreshold/newMax);
+    else
+      threshold = 1;
   }
   
   public static void drawQuad(Quad sprite){
@@ -167,6 +246,7 @@ public class QuadDraw{
       flags&=-17;
 
     brokenUpFill[0] = fill >>> 24;
+    boolean alwaysDraw = (flags & -128) == 0 || brokenUpFill[0] >= 0;
     int[] texels = sprite.returnPixels();
     int spriteWidth = sprite.returnImageWidth();
     int spriteHeight = sprite.returnImageHeight();
@@ -183,6 +263,11 @@ public class QuadDraw{
                         1, 1};//1*6+2*2+0(u) -/- 1*6+2*2+1(v) 
     if(sprite.equalTransparencies()){
         brokenUpFill[0] = (int)(brokenUpFill[0]*vertexColours[0][0]);
+    }
+    if((flags & -128) == -128){
+      brokenUpFill[0] = 255;
+      stroke|=0xFF000000;
+      vertexColours[0][0] = 1;
     }
 
     alphaNorm = brokenUpFill[0]*Colour.INV_255;
@@ -362,7 +447,7 @@ public class QuadDraw{
         //Drawing between the edges
         for(int j = xBounds[0]; j < xBounds[1]; j++){
           pixelPos = i*wid+j;
-          if(stencil[pixelPos] == 0 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){ 
+          if((alwaysDraw || mesh[(i%meshSize)*meshSize+(j%meshSize)]) && stencil[pixelPos] == 0 && (1 <= threshold || Math.random() < threshold)){ 
             xPos = j+0.5f; //The centre-x of the pixel
             boolean draw = true;//Determines if the current pixel should be updated
             indices = Quad.TRI_INDICES[0];
@@ -440,6 +525,7 @@ public class QuadDraw{
               }
               //Updating the pixel
               if(draw){
+                int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
                 z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
                 adjustedAlpha*=vertices[indices[0]][2];
                 adjustedBeta*=vertices[indices[1]][2];
@@ -449,15 +535,16 @@ public class QuadDraw{
                   tempZ = 1/tempZ;
                 else
                   tempZ = EPSILON*(((flags & 4) >>> 1)-1);
-
-                if(!sprite.equalTransparencies())
-                  brokenUpColour[0] = Math.round(brokenUpColour[0]*tempZ*(vertexColours[indices[0]][0]*adjustedAlpha+vertexColours[indices[1]][0]*adjustedBeta+vertexColours[indices[2]][0]*adjustedGamma));
-                else
-                  brokenUpColour[0] = Math.round(brokenUpColour[0]*vertexColours[0][0]);
-                if(brokenUpColour[0] >= 255)
-                  brokenUpColour[0] = 255;
-                else if(brokenUpColour[0] <= 0)
-                  brokenUpColour[0] = 0;
+               
+                if(Float.isNaN(zBuff[pixelPos]) || ((flags & 4) == 0 && z <= zBuff[pixelPos] || zBuff[pixelPos] >= 0 && z > zBuff[pixelPos])){
+                  if(!sprite.equalTransparencies() && (flags & -128) == 0)
+                    brokenUpColour[0] = Math.round(brokenUpColour[0]*tempZ*(vertexColours[indices[0]][0]*adjustedAlpha+vertexColours[indices[1]][0]*adjustedBeta+vertexColours[indices[2]][0]*adjustedGamma));
+                  else
+                    brokenUpColour[0] = Math.round(brokenUpColour[0]*vertexColours[0][0]);
+                  if(brokenUpColour[0] >= 255)
+                    brokenUpColour[0] = 255;
+                  else if(brokenUpColour[0] <= 0)
+                    brokenUpColour[0] = 0;
 
                 if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
                   if(!sprite.equalColour()){
@@ -493,8 +580,7 @@ public class QuadDraw{
                   if(brokenUpColour[3] >= 255)
                     brokenUpColour[3] = 255;
                 }
-                  int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
-                  if(Float.isNaN(zBuff[pixelPos]) || ((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos])){
+
                     if(brokenUpColour[0] < 0xFF)
                       Colour.interpolateColours(brokenUpColour, brokenUpFrame);
                     if(brokenUpColour[0] > minTransparency){
@@ -542,6 +628,7 @@ public class QuadDraw{
       flags&=-17;
 
     brokenUpFill[0] = fill >>> 24;
+    boolean alwaysDraw = ((flags & -128) == 0) || (brokenUpFill[0] >= 255);
     int spriteWidth = sprite.returnImageWidth();
     int spriteHeight = sprite.returnImageHeight();
     char spriteMode = sprite.returnMode();
@@ -559,7 +646,11 @@ public class QuadDraw{
     if(sprite.equalTransparencies()){
         brokenUpFill[0] = (int)(brokenUpFill[0]*vertexColours[0][0]);
     }
-
+    if((flags & -128) == -128){
+      brokenUpFill[0] = 255;
+      stroke|=0xFF000000;
+      vertexColours[0][0] = 1;
+    }
     alphaNorm = brokenUpFill[0]*Colour.INV_255;
     brokenUpFill[1] = (fill >>> 16) & 0xFF;
     brokenUpFill[2] = (fill >>> 8) & 0xFF;
@@ -733,7 +824,7 @@ public class QuadDraw{
         for(int j = xBounds[0]; j < xBounds[1]; j++){
           pixelPos = i*wid+j;
           stencilTest(pixelPos, compVal, testType);
-          if((flags & 1) == 1 && (maxProbability <= threshold || Math.random()*maxProbability < threshold)){
+          if((alwaysDraw || mesh[(i%meshSize)*meshSize+(j%meshSize)]) && (flags & 1) == 1 && (1 <= threshold || Math.random() < threshold)){
             xPos = j+0.5f; //The centre-x of the pixel
             boolean draw = true;//Determines if the current pixel should be updated
             indices = Quad.TRI_INDICES[0];
@@ -810,6 +901,7 @@ public class QuadDraw{
             }
             //Updating the pixel
             if(draw){
+              int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
               z = vertices[indices[0]][2]*alpha+vertices[indices[1]][2]*beta+vertices[indices[2]][2]*gamma;
               adjustedAlpha*=vertices[indices[0]][2];
               adjustedBeta*=vertices[indices[1]][2];
@@ -819,54 +911,54 @@ public class QuadDraw{
                 tempZ = 1/tempZ;
               else
                 tempZ = EPSILON*(((flags & 4) >>> 4)-1);
+              if(Float.isNaN(zBuff[pixelPos]) || ((flags & 4) == 0 && z <= zBuff[pixelPos] || zBuff[pixelPos] >= 0 && z > zBuff[pixelPos])){
+                if(!sprite.equalTransparencies() && (flags & -128) == 0)
+                  brokenUpColour[0] = Math.round(brokenUpColour[0]*tempZ*(vertexColours[indices[0]][0]*adjustedAlpha+vertexColours[indices[1]][0]*adjustedBeta+vertexColours[indices[2]][0]*adjustedGamma));
+                else
+                  brokenUpColour[0] = Math.round(brokenUpColour[0]*vertexColours[0][0]);
+                if(brokenUpColour[0] >= 255)
+                  brokenUpColour[0] = 255;
+                else if(brokenUpColour[0] <= 0)
+                  brokenUpColour[0] = 0;
 
-              if(!sprite.equalTransparencies())
-                brokenUpColour[0] = Math.round(brokenUpColour[0]*tempZ*(vertexColours[indices[0]][0]*adjustedAlpha+vertexColours[indices[1]][0]*adjustedBeta+vertexColours[indices[2]][0]*adjustedGamma));
-              else
-                brokenUpColour[0] = Math.round(brokenUpColour[0]*vertexColours[0][0]);
-              if(brokenUpColour[0] >= 255)
-                brokenUpColour[0] = 255;
-              else if(brokenUpColour[0] <= 0)
-                brokenUpColour[0] = 0;
+                if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
+                  if(!sprite.equalColour()){
+                    float[] overallBrightness = {tempZ*(vertexColours[indices[0]][1]*adjustedAlpha+vertexColours[indices[1]][1]*adjustedBeta+vertexColours[indices[2]][1]*adjustedGamma),
+                                                tempZ*(vertexColours[indices[0]][2]*adjustedAlpha+vertexColours[indices[1]][2]*adjustedBeta+vertexColours[indices[2]][2]*adjustedGamma),
+                                                tempZ*(vertexColours[indices[0]][3]*adjustedAlpha+vertexColours[indices[1]][3]*adjustedBeta+vertexColours[indices[2]][3]*adjustedGamma)};
+                    if(overallBrightness[0] <= 0)
+                      overallBrightness[0] = 0;
+                    if(overallBrightness[1] <= 0)
+                      overallBrightness[1] = 0;
+                    if(overallBrightness[2] <= 0)
+                      overallBrightness[2] = 0;
 
-              if(brokenUpColour[1] != 0 && brokenUpColour[2] != 0 && brokenUpColour[3] != 0){
-                if(!sprite.equalColour()){
-                  float[] overallBrightness = {tempZ*(vertexColours[indices[0]][1]*adjustedAlpha+vertexColours[indices[1]][1]*adjustedBeta+vertexColours[indices[2]][1]*adjustedGamma),
-                                               tempZ*(vertexColours[indices[0]][2]*adjustedAlpha+vertexColours[indices[1]][2]*adjustedBeta+vertexColours[indices[2]][2]*adjustedGamma),
-                                               tempZ*(vertexColours[indices[0]][3]*adjustedAlpha+vertexColours[indices[1]][3]*adjustedBeta+vertexColours[indices[2]][3]*adjustedGamma)};
-                  if(overallBrightness[0] <= 0)
-                    overallBrightness[0] = 0;
-                  if(overallBrightness[1] <= 0)
-                    overallBrightness[1] = 0;
-                  if(overallBrightness[2] <= 0)
-                    overallBrightness[2] = 0;
-
-                  brokenUpColour[1] = Math.round(brokenUpColour[1]*overallBrightness[0]);
-                  brokenUpColour[2] = Math.round(brokenUpColour[2]*overallBrightness[1]);
-                  brokenUpColour[3] = Math.round(brokenUpColour[3]*overallBrightness[2]);
-                }
-                else{
-                  brokenUpColour[1] = Math.round(brokenUpColour[1]*vertexColours[0][1]);
-                  brokenUpColour[2] = Math.round(brokenUpColour[2]*vertexColours[0][2]);
-                  brokenUpColour[3] = Math.round(brokenUpColour[3]*vertexColours[0][3]);
-                  if(brokenUpColour[1] <= 0)
-                    brokenUpColour[1] = 0;
-                  if(brokenUpColour[2] <= 0)
-                    brokenUpColour[2] = 0;
-                  if(brokenUpColour[3] <= 0)
-                    brokenUpColour[3] = 0;
-                }
-                if(brokenUpColour[1] >= 255)
-                  brokenUpColour[1] = 255;
-                if(brokenUpColour[2] >= 255)
-                  brokenUpColour[2] = 255;
-                if(brokenUpColour[3] >= 255)
-                  brokenUpColour[3] = 255;
+                    brokenUpColour[1] = Math.round(brokenUpColour[1]*overallBrightness[0]);
+                    brokenUpColour[2] = Math.round(brokenUpColour[2]*overallBrightness[1]);
+                    brokenUpColour[3] = Math.round(brokenUpColour[3]*overallBrightness[2]);
+                  }
+                  else{
+                    brokenUpColour[1] = Math.round(brokenUpColour[1]*vertexColours[0][1]);
+                    brokenUpColour[2] = Math.round(brokenUpColour[2]*vertexColours[0][2]);
+                    brokenUpColour[3] = Math.round(brokenUpColour[3]*vertexColours[0][3]);
+                    if(brokenUpColour[1] <= 0)
+                      brokenUpColour[1] = 0;
+                    if(brokenUpColour[2] <= 0)
+                      brokenUpColour[2] = 0;
+                    if(brokenUpColour[3] <= 0)
+                      brokenUpColour[3] = 0;
+                  }
+                  if(brokenUpColour[1] >= 255)
+                    brokenUpColour[1] = 255;
+                  if(brokenUpColour[2] >= 255)
+                    brokenUpColour[2] = 255;
+                  if(brokenUpColour[3] >= 255)
+                    brokenUpColour[3] = 255;
 
 
-                }
-                int brokenUpFrame[] = {frame[pixelPos] >>> 24, (frame[pixelPos] >>> 16) & 0xFF, (frame[pixelPos] >>> 8) & 0xFF, frame[pixelPos] & 0xFF};
-                if(Float.isNaN(zBuff[pixelPos]) || ((flags & 4) == 0 && z <= zBuff[pixelPos] || (flags & 4) == 4 && z > zBuff[pixelPos])){
+                  }
+
+
                   if(brokenUpColour[0] < 0xFF)
                       Colour.interpolateColours(brokenUpColour, brokenUpFrame);
                   if(brokenUpColour[0] > minTransparency){

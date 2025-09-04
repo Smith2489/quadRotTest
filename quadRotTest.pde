@@ -31,6 +31,8 @@ void setup(){
   sprite.setMode('m');
   sprite2 = new Quad(vertices2, image, Colour.WHITE, Colour.MAGENTA, true, false);
   sprite2.setStencilAction(new TestAction());
+  QuadDraw.useMeshTransparency();
+  QuadDraw.loadTransparencyMesh("quadRotTest/transparency.txt");
 }
 
 void draw(){
@@ -72,16 +74,17 @@ void draw(){
   //QuadDraw.stroke(Colour.MAGENTA);
   //QuadDraw.fill(Colour.YELLOW);
   //QuadDraw.noStroke();
-  QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
+  //QuadDraw.setProbabilities(-10, 4.5);
+
   QuadDraw.setDepthWrite(false);
   QuadDraw.drawQuad(sprite2, (byte)5, 'g');
   
-
+  //QuadDraw.setProbabilities(sprite2.returnMaxFizzel(), sprite2.returnFizzelThreshold());
 
   sprite.setVertices(drawVertices);
   //QuadDraw.noFill();
   QuadDraw.setDepthWrite(false);
-  //QuadDraw.setProbabilities(5, 4.5);
+
   QuadDraw.drawQuad(sprite, (byte)5, 'g');
   
 

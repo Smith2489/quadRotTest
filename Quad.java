@@ -9,6 +9,8 @@ public class Quad extends FilledParent{
   private float[][] vertices = new float[4][3];
   private float[][] vertexBrightness = new float[4][4];
   //Flag bits
+  //3 = Equal Transparencies
+  //4 = Equal Colour
   //5 = Removal enable, 
   //6 = parallel sides equal length
   
@@ -117,6 +119,15 @@ public class Quad extends FilledParent{
       flags&=-33;
   }
 
+  public boolean equalTransparencies(){
+    return (flags & 8) == 8;
+  }
+
+  public boolean equalColour(){
+    return (flags & 16) == 16;
+  } 
+
+
   public boolean hasRemoval(){
     return (flags & 32) == 32;
   }
@@ -198,19 +209,7 @@ public class Quad extends FilledParent{
     vertexBrightness[index][1] = r;
     vertexBrightness[index][2] = g;
     vertexBrightness[index][3] = b;
-    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0])+Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0])+Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0])+Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0]),
-                            Math.abs(vertexBrightness[0][1]-vertexBrightness[1][1])+Math.abs(vertexBrightness[1][1]-vertexBrightness[2][1])+Math.abs(vertexBrightness[2][1]-vertexBrightness[3][1])+Math.abs(vertexBrightness[3][1]-vertexBrightness[0][1]),
-                            Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
-                            Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
-    if(transparency[0] <= 0.0001)
-      flags|=8;
-    else
-      flags&=-9;
-
-    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
-      flags|=16;
-    else
-      flags&=-17;
+    setEqualityFlags();
   }
   
   public void setVertexBrightness(float a, float r, float g, float b, byte index){
@@ -218,19 +217,7 @@ public class Quad extends FilledParent{
     vertexBrightness[index][1] = r;
     vertexBrightness[index][2] = g;
     vertexBrightness[index][3] = b;
-    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0])+Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0])+Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0])+Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0]),
-                            Math.abs(vertexBrightness[0][1]-vertexBrightness[1][1])+Math.abs(vertexBrightness[1][1]-vertexBrightness[2][1])+Math.abs(vertexBrightness[2][1]-vertexBrightness[3][1])+Math.abs(vertexBrightness[3][1]-vertexBrightness[0][1]),
-                            Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
-                            Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
-    if(transparency[0] <= 0.0001)
-      flags|=8;
-    else
-      flags&=-9;
-
-    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
-      flags|=16;
-    else
-      flags&=-17;
+    setEqualityFlags();
     
   }
   
@@ -247,19 +234,7 @@ public class Quad extends FilledParent{
       vertexBrightness[index][2] = brightnessLevels[1];
       vertexBrightness[index][3] = brightnessLevels[2];
     }
-    float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0])+Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0])+Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0])+Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0]),
-                            Math.abs(vertexBrightness[0][1]-vertexBrightness[1][1])+Math.abs(vertexBrightness[1][1]-vertexBrightness[2][1])+Math.abs(vertexBrightness[2][1]-vertexBrightness[3][1])+Math.abs(vertexBrightness[3][1]-vertexBrightness[0][1]),
-                            Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
-                            Math.abs(vertexBrightness[0][3]-vertexBrightness[1][3])+Math.abs(vertexBrightness[1][3]-vertexBrightness[2][3])+Math.abs(vertexBrightness[2][3]-vertexBrightness[3][3])+Math.abs(vertexBrightness[3][3]-vertexBrightness[0][3])};
-    if(transparency[0] <= 0.0001)
-      flags|=8;
-    else
-      flags&=-9;
-      
-    if(transparency[1] <= 0.0001 && transparency[2] <= 0.0001 && transparency[3] <= 0.0001)
-      flags|=16;
-    else
-      flags&=-17;
+    setEqualityFlags();
   }
 
   public void setVertexBrightness(float[][] brightnessLevels){
@@ -283,6 +258,10 @@ public class Quad extends FilledParent{
     vertexBrightness[3][1] = brightnessLevels[3][start];
     vertexBrightness[3][2] = brightnessLevels[3][start+1];
     vertexBrightness[3][3] = brightnessLevels[3][start+2];
+    setEqualityFlags();
+  }
+
+  private void setEqualityFlags(){
     float[] transparency = {Math.abs(vertexBrightness[0][0]-vertexBrightness[1][0])+Math.abs(vertexBrightness[1][0]-vertexBrightness[2][0])+Math.abs(vertexBrightness[2][0]-vertexBrightness[3][0])+Math.abs(vertexBrightness[3][0]-vertexBrightness[0][0]),
                             Math.abs(vertexBrightness[0][1]-vertexBrightness[1][1])+Math.abs(vertexBrightness[1][1]-vertexBrightness[2][1])+Math.abs(vertexBrightness[2][1]-vertexBrightness[3][1])+Math.abs(vertexBrightness[3][1]-vertexBrightness[0][1]),
                             Math.abs(vertexBrightness[0][2]-vertexBrightness[1][2])+Math.abs(vertexBrightness[1][2]-vertexBrightness[2][2])+Math.abs(vertexBrightness[2][2]-vertexBrightness[3][2])+Math.abs(vertexBrightness[3][2]-vertexBrightness[0][2]),
