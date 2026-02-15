@@ -1,4 +1,4 @@
-import java.io.*;
+import java.io.File;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 public class Graphic {
@@ -22,13 +22,11 @@ public class Graphic {
           width = sprite.getWidth();
           height = sprite.getHeight();
           img = new int[width*height];
-          for(int i = 0; i < width; i++){
-            for(int j = 0; j < height; j++){
-              img[i+width*j] = sprite.getRGB(i, j);
-            }
-          }
+          for(int i = 0; i < width; i++)
+            for(int j = 0; j < height; j++)
+              img[j*width+i] = sprite.getRGB(i, j);
         }
-        catch(IOException e){
+        catch(Exception e){
           System.out.println("ERROR: FILE "+imagePath+" NOT FOUND OR IS INVALID");
           System.exit(1);
         }
@@ -43,10 +41,8 @@ public class Graphic {
         img = new int[newImage.length];
         width = newWidth;
         height = newHeight;
-        for(int i = 0; i < width; i++){
-          for(int j = 0; j < height; j++)
-            img[i+width*j] = newImage[i+width*j];
-        }
+        for(int i = 0; i < newImage.length; i++)
+          img[i] = newImage[i];
         removalColour[0] = 0xFF00FF;
         removalColour[1] = 0xFF00FF;
       }
@@ -54,16 +50,14 @@ public class Graphic {
         File file = new File(imagePath);
         try{
           BufferedImage sprite = ImageIO.read(file);
-          width = (short)(sprite.getWidth() & 0xFFFFFFFF);
-          height = (short)(sprite.getHeight() & 0xFFFFFFFF);
+          width = sprite.getWidth();
+          height = sprite.getHeight();
           img = new int[width*height];
-          for(short i = 0; i < width; i++){
-            for(short j = 0; j < height; j++){
-              img[i+width*j] = sprite.getRGB(i, j);
-            }
-          }
+          for(int i = 0; i < width; i++)
+            for(int j = 0; j < height; j++)
+              img[j*width+i] = sprite.getRGB(i, j);
         }
-        catch(IOException e){
+        catch(Exception e){
           System.out.println("ERROR: FILE "+imagePath+" NOT FOUND OR IS INVALID");
           System.exit(1);
         }
@@ -76,10 +70,8 @@ public class Graphic {
         img = new int[newImage.length];
         width = newWidth;
         height = newHeight;
-        for(int i = 0; i < width; i++){
-          for(int j = 0; j < height; j++)
-            img[i+width*j] = newImage[i+width*j];
-        }
+        for(int i = 0; i < newImage.length; i++)
+          img[i] = newImage[i];
       }
       public void setInvisColour(int invisColour1, int invisColour2){
         invisColour1&=0xFFFFFF;
@@ -100,6 +92,12 @@ public class Graphic {
       public int[] returnPixels(){
         return img;
       }
+
+      public int[] returnPixel(int x, int y){
+        int pixelPos = x+width*y;
+        int[] out = {(img[pixelPos] >>> 16) & 0xFF, (img[pixelPos] >>> 8) & 0xFF, img[pixelPos] & 0xFF};
+        return out;
+      }
       public int returnWidth(){
         return width;
       }
@@ -110,7 +108,6 @@ public class Graphic {
         return removalColour[index];
       }
       
-
       public boolean shouldDrawPixel(int x, int y){
         int pixelIndex = x+width*y;
         int[] tempR = {(removalColour[0] >>> 16) & 0xFF, (removalColour[1] >>> 16) & 0xFF, (img[pixelIndex] >>> 16) & 0xFF};

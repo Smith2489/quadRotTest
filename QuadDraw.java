@@ -23,7 +23,6 @@ public class QuadDraw{
   private static int meshSize = 2;
   private static boolean[] mesh = {true, false, false, true};
 
-
   public static void setFrame(int[] newFrame, int width, int height){
     frame = newFrame;
     wid = width;
@@ -253,14 +252,6 @@ public class QuadDraw{
     char spriteMode = sprite.returnMode();
     float[][] vertexColours = sprite.returnVertexBrightness();
     float[][] vertices = sprite.getVertices();
-    //To access an element: howDeep*6+howHigh*2+howWide
-    float[] uvCoords = {0, 0, //0*6+0*2+0(u) -/- 0*6+0*2+1(v)
-                        1, 1, //0*6+1*2+0(u) -/- 0*6+1*2+1(v)
-                        0, 1, //0*6+2*2+0(u) -/- 0*6+2*2+1(v)
-
-                        0, 0, //1*6+0*2+0(u) -/- 1*6+0*2+1(v)
-                        1, 0, //1*6+1*2+0(u) -/- 1*6+1*2+1(v)
-                        1, 1};//1*6+2*2+0(u) -/- 1*6+2*2+1(v) 
     if(sprite.equalTransparencies()){
         brokenUpFill[0] = (int)(brokenUpFill[0]*vertexColours[0][0]);
     }
@@ -291,24 +282,10 @@ public class QuadDraw{
     }
     float[] denominators = {(vertices[2][1] - vertices[3][1])*(vertices[0][0] - vertices[3][0]) + (vertices[3][0] - vertices[2][0])*(vertices[0][1] - vertices[3][1]),
                             (vertices[1][1] - vertices[2][1])*(vertices[0][0] - vertices[2][0]) + (vertices[2][0] - vertices[1][0])*(vertices[0][1] - vertices[2][1])};
-    boolean isSquished = false;
       
-    if(denominators[0] >= -EPSILON && denominators[0] <= EPSILON){
-      isSquished = true;
-      swapABC(vertices, vertexColours, uvCoords);
-
-      
-      //Tri ABC exists, but not ACD
+    if(denominators[0] >= -EPSILON && denominators[0] <= EPSILON || denominators[1] >= -EPSILON && denominators[1] <= EPSILON){
+      return;
     }
-    if(denominators[1] >= -EPSILON && denominators[1] <= EPSILON){
-      if(isSquished)
-        return;
-      else{
-        isSquished = true;
-        swapACD(vertices, vertexColours, uvCoords);
-      }
-    }
-    
     //Quad fill
     if((flags & 16) == 16){
 
@@ -316,30 +293,24 @@ public class QuadDraw{
       boolean useImage = sprite.hasImage();
       float[] intersect = {Float.NaN, Float.NaN};
       if(!sprite.isRectangle()){
-        if(!isSquished){
-          intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
-          if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
-            float[] dists = {(float)Math.sqrt((vertices[0][0]-intersect[0])*(vertices[0][0]-intersect[0]) + (vertices[0][1]-intersect[1])*(vertices[0][1]-intersect[1])),
-                             (float)Math.sqrt((vertices[1][0]-intersect[0])*(vertices[1][0]-intersect[0]) + (vertices[1][1]-intersect[1])*(vertices[1][1]-intersect[1])),
-                             (float)Math.sqrt((vertices[2][0]-intersect[0])*(vertices[2][0]-intersect[0]) + (vertices[2][1]-intersect[1])*(vertices[2][1]-intersect[1])),
-                             (float)Math.sqrt((vertices[3][0]-intersect[0])*(vertices[3][0]-intersect[0]) + (vertices[3][1]-intersect[1])*(vertices[3][1]-intersect[1]))};
+        intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
+        if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
+          float[] dists = {(float)Math.sqrt((vertices[0][0]-intersect[0])*(vertices[0][0]-intersect[0]) + (vertices[0][1]-intersect[1])*(vertices[0][1]-intersect[1])),
+                           (float)Math.sqrt((vertices[1][0]-intersect[0])*(vertices[1][0]-intersect[0]) + (vertices[1][1]-intersect[1])*(vertices[1][1]-intersect[1])),
+                           (float)Math.sqrt((vertices[2][0]-intersect[0])*(vertices[2][0]-intersect[0]) + (vertices[2][1]-intersect[1])*(vertices[2][1]-intersect[1])),
+                           (float)Math.sqrt((vertices[3][0]-intersect[0])*(vertices[3][0]-intersect[0]) + (vertices[3][1]-intersect[1])*(vertices[3][1]-intersect[1]))};
                             
-            if(dists[2] > EPSILON)
-              adjWeights[0] = (dists[0]/dists[2] + 1);
-            if(dists[3] > EPSILON)
-              adjWeights[1] = (dists[1]/dists[3] + 1);
-            if(dists[0] > EPSILON)
-              adjWeights[2] = (dists[2]/dists[0] + 1);
-            if(dists[1] > EPSILON)
-              adjWeights[3] = (dists[3]/dists[1] + 1);
-          }
-          else{
-            return;
-          }
+          if(dists[2] > EPSILON)
+            adjWeights[0] = (dists[0]/dists[2] + 1);
+          if(dists[3] > EPSILON)
+            adjWeights[1] = (dists[1]/dists[3] + 1);
+          if(dists[0] > EPSILON)
+            adjWeights[2] = (dists[2]/dists[0] + 1);
+          if(dists[1] > EPSILON)
+            adjWeights[3] = (dists[3]/dists[1] + 1);
         }
         else{
-          denominators[0] = (vertices[2][1] - vertices[3][1])*(vertices[0][0] - vertices[3][0]) + (vertices[3][0] - vertices[2][0])*(vertices[0][1] - vertices[3][1]);
-          denominators[1] = (vertices[1][1] - vertices[2][1])*(vertices[0][0] - vertices[2][0]) + (vertices[2][0] - vertices[1][0])*(vertices[0][1] - vertices[2][1]);
+          return;
         }
       }
 
@@ -475,8 +446,11 @@ public class QuadDraw{
               else
                 overallWeight = EPSILON;
               //Finding the UV coordinates of the texture in the current triangle
-              u = ((uvCoords[uvIndex*6]*adjustedAlpha)+(uvCoords[uvIndex*6+2]*adjustedBeta)+(uvCoords[uvIndex*6+4]*adjustedGamma))*overallWeight-0.00001f;
-              v = ((uvCoords[uvIndex*6+1]*adjustedAlpha)+(uvCoords[uvIndex*6+3]*adjustedBeta)+(uvCoords[uvIndex*6+5]*adjustedGamma))*overallWeight-0.00001f;
+              //(Vertex A is guarenteed to be constant)
+              //(For U, vertices B and C are both 1, though D can be 0)
+              //(For V, vertices D and C are both 0, but B can be 1)
+              u = (adjustedBeta+(uvIndex*adjustedGamma))*overallWeight;
+              v = (adjustedAlpha+(uvIndex*adjustedBeta))*overallWeight;
               if(u >= 0 && u <= 1 && v >= 0 && v <= 1){
             
                 //Converting from UV coordinates to the real coordinates in the image
@@ -635,14 +609,6 @@ public class QuadDraw{
     float[][] vertexColours = sprite.returnVertexBrightness();
     float[][] vertices = sprite.getVertices();
     int[] texels = sprite.returnPixels();
-    //To access an element: howDeep*6+howHigh*2+howWide
-    float[] uvCoords = {0, 0, //0*6+0*2+0(u) -/- 0*6+0*2+1(v)
-                        1, 1, //0*6+1*2+0(u) -/- 0*6+1*2+1(v)
-                        0, 1, //0*6+2*2+0(u) -/- 0*6+2*2+1(v)
-                        
-                        0, 0, //1*6+0*2+0(u) -/- 1*6+0*2+1(v)
-                        1, 0, //1*6+1*2+0(u) -/- 1*6+1*2+1(v)
-                        1, 1};//1*6+2*2+0(u) -/- 1*6+2*2+1(v) 
     if(sprite.equalTransparencies()){
         brokenUpFill[0] = (int)(brokenUpFill[0]*vertexColours[0][0]);
     }
@@ -669,21 +635,11 @@ public class QuadDraw{
       System.out.println("INTERSECTION");
       return;
     }
-    boolean isSquished = false;
     float[] denominators = {(vertices[2][1] - vertices[3][1])*(vertices[0][0] - vertices[3][0]) + (vertices[3][0] - vertices[2][0])*(vertices[0][1] - vertices[3][1]),
                             (vertices[1][1] - vertices[2][1])*(vertices[0][0] - vertices[2][0]) + (vertices[2][0] - vertices[1][0])*(vertices[0][1] - vertices[2][1])};
     
-    if(denominators[0] >= -EPSILON && denominators[0] <= EPSILON){
-      isSquished = true;
-      swapABC(vertices, vertexColours, uvCoords);
-    }
-    if(denominators[1] >= -EPSILON && denominators[1] <= EPSILON){
-      if(isSquished)
-        return;
-      else{
-        isSquished = true;
-        swapACD(vertices, vertexColours, uvCoords);
-      }
+    if(denominators[0] >= -EPSILON && denominators[0] <= EPSILON || denominators[1] >= -EPSILON && denominators[1] <= EPSILON){
+      return;
     }
     
     //Quad fill
@@ -692,31 +648,25 @@ public class QuadDraw{
       boolean useImage = sprite.hasImage();
       float[] intersect = {Float.NaN, Float.NaN};
       if(!sprite.isRectangle()){
-        if(!isSquished){
-          intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
-          if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
-            float[] dists = {(float)Math.sqrt((vertices[0][0]-intersect[0])*(vertices[0][0]-intersect[0]) + (vertices[0][1]-intersect[1])*(vertices[0][1]-intersect[1])),
-                             (float)Math.sqrt((vertices[1][0]-intersect[0])*(vertices[1][0]-intersect[0]) + (vertices[1][1]-intersect[1])*(vertices[1][1]-intersect[1])),
-                             (float)Math.sqrt((vertices[2][0]-intersect[0])*(vertices[2][0]-intersect[0]) + (vertices[2][1]-intersect[1])*(vertices[2][1]-intersect[1])),
-                             (float)Math.sqrt((vertices[3][0]-intersect[0])*(vertices[3][0]-intersect[0]) + (vertices[3][1]-intersect[1])*(vertices[3][1]-intersect[1]))};
+        intersect = getIntersection(vertices[0][0], vertices[0][1], vertices[2][0], vertices[2][1], vertices[1][0], vertices[1][1], vertices[3][0], vertices[3][1]);
+        if(!Float.isNaN(intersect[0]) && !Float.isNaN(intersect[1])){
+          float[] dists = {(float)Math.sqrt((vertices[0][0]-intersect[0])*(vertices[0][0]-intersect[0]) + (vertices[0][1]-intersect[1])*(vertices[0][1]-intersect[1])),
+                           (float)Math.sqrt((vertices[1][0]-intersect[0])*(vertices[1][0]-intersect[0]) + (vertices[1][1]-intersect[1])*(vertices[1][1]-intersect[1])),
+                           (float)Math.sqrt((vertices[2][0]-intersect[0])*(vertices[2][0]-intersect[0]) + (vertices[2][1]-intersect[1])*(vertices[2][1]-intersect[1])),
+                           (float)Math.sqrt((vertices[3][0]-intersect[0])*(vertices[3][0]-intersect[0]) + (vertices[3][1]-intersect[1])*(vertices[3][1]-intersect[1]))};
 
-              if(dists[2] > EPSILON)
-                adjWeights[0] = (dists[0]/dists[2] + 1);
-              if(dists[3] > EPSILON)
-                adjWeights[1] = (dists[1]/dists[3] + 1);
-              if(dists[0] > EPSILON)
-                adjWeights[2] = (dists[2]/dists[0] + 1);
-              if(dists[1] > EPSILON)
-                adjWeights[3] = (dists[3]/dists[1] + 1);
+          if(dists[2] > EPSILON)
+            adjWeights[0] = (dists[0]/dists[2] + 1);
+          if(dists[3] > EPSILON)
+            adjWeights[1] = (dists[1]/dists[3] + 1);
+          if(dists[0] > EPSILON)
+            adjWeights[2] = (dists[2]/dists[0] + 1);
+          if(dists[1] > EPSILON)
+            adjWeights[3] = (dists[3]/dists[1] + 1);
           }
           else{
             return;
           }
-        }
-        else{
-          denominators[0] = (vertices[2][1] - vertices[3][1])*(vertices[0][0] - vertices[3][0]) + (vertices[3][0] - vertices[2][0])*(vertices[0][1] - vertices[3][1]);
-          denominators[1] = (vertices[1][1] - vertices[2][1])*(vertices[0][0] - vertices[2][0]) + (vertices[2][0] - vertices[1][0])*(vertices[0][1] - vertices[2][1]);
-        }
       }
 
       
@@ -851,8 +801,11 @@ public class QuadDraw{
               else
                 overallWeight = EPSILON;
               //Finding the UV coordinates of the texture in the current triangle
-              u = ((uvCoords[uvIndex*6]*adjustedAlpha)+(uvCoords[uvIndex*6+2]*adjustedBeta)+(uvCoords[uvIndex*6+4]*adjustedGamma))*overallWeight-0.00001f;
-              v = ((uvCoords[uvIndex*6+1]*adjustedAlpha)+(uvCoords[uvIndex*6+3]*adjustedBeta)+(uvCoords[uvIndex*6+5]*adjustedGamma))*overallWeight-0.00001f;
+              //(Vertex A is guarenteed to be constant)
+              //(For U, vertices B and C are both 1, though D can be 0)
+              //(For V, vertices D and C are both 0, but B can be 1)
+              u = (adjustedBeta+(uvIndex*adjustedGamma))*overallWeight;
+              v = (adjustedAlpha+(uvIndex*adjustedBeta))*overallWeight;
               if(u >= 0 && u <= 1 && v >= 0 && v <= 1){
                 //Converting from UV coordinates to the real coordinates in the image
                 imgX = (int)(u*spriteWidth);
@@ -986,115 +939,6 @@ public class QuadDraw{
   
     }
   }
-  
-  private static void swapACD(float[][] vertices, float[][] vertexColours, float[] uvCoords){
-    float[] midPoint = {(vertices[3][0]+vertices[0][0])*0.5f, (vertices[3][1]+vertices[0][1])*0.5f, (vertices[3][2]+vertices[0][2])*0.5f};
-    float[] midColour = {(vertexColours[3][0]+vertexColours[0][0])*0.5f,
-                         (vertexColours[3][1]+vertexColours[0][1])*0.5f,
-                         (vertexColours[3][2]+vertexColours[0][2])*0.5f,
-                         (vertexColours[3][3]+vertexColours[0][3])*0.5f};
-
-    vertexColours[1][0] = vertexColours[3][0];
-    vertexColours[1][1] = vertexColours[3][1];
-    vertexColours[1][2] = vertexColours[3][2];
-    vertexColours[1][3] = vertexColours[3][3];
-        
-    vertexColours[3][0] = vertexColours[0][0];
-    vertexColours[3][1] = vertexColours[0][1];
-    vertexColours[3][2] = vertexColours[0][2];
-    vertexColours[3][3] = vertexColours[0][3];
-
-    vertexColours[0][0] = vertexColours[2][0];
-    vertexColours[0][1] = vertexColours[2][1];
-    vertexColours[0][2] = vertexColours[2][2];
-    vertexColours[0][3] = vertexColours[2][3];
-
-    vertexColours[2][0] = midColour[0];
-    vertexColours[2][1] = midColour[1];
-    vertexColours[2][2] = midColour[2];
-    vertexColours[2][3] = midColour[3];
-        
-    vertices[1][0] = vertices[3][0];
-    vertices[1][1] = vertices[3][1];
-    vertices[1][2] = vertices[3][2];
-
-    vertices[3][0] = vertices[0][0];
-    vertices[3][1] = vertices[0][1];
-    vertices[3][2] = vertices[0][2];
-        
-    vertices[0][0] = vertices[2][0];
-    vertices[0][1] = vertices[2][1];
-    vertices[0][2] = vertices[2][2];
-
-    vertices[2][0] = midPoint[0];
-    vertices[2][1] = midPoint[1];
-    vertices[2][2] = midPoint[2];
-
-    uvCoords[0] = 1;     //Tri 0, uv coord 0, axis 0 (u) 0*6+2*0+0 =  0 - a
-    uvCoords[1] = 0;     //Tri 0, uv coord 0, axis 1 (v) 0*6+2*0+1 =  1
-
-    uvCoords[2] = 0;     //Tri 0, uv coord 1, axis 0 (u) 0*6+2*1+0 =  2 - c
-    uvCoords[3] = 0.5f;  //Tri 0, uv coord 1, axis 1 (v) 0*6+2*1+1 =  3
-
-    uvCoords[4] = 0;     //Tri 0, uv coord 2, axis 0 (u) 0*6+2*2+0 =  4 - d
-    uvCoords[5] = 0;     //Tri 0, uv coord 2, axis 1 (v) 0*6+2*2+1 =  5
-
-    uvCoords[6] = 1;     //Tri 1, uv coord 0, axis 0 (u) 1*6+2*0+0 =  6 - a
-    uvCoords[7] = 1;     //Tri 1, uv coord 0, axis 1 (v) 1*6+2*0+1 =  7
-
-    uvCoords[8] = 0;     //Tri 1, uv coord 1, axis 0 (u) 1*6+2*1+0 =  8 - b
-    uvCoords[9] = 1;     //Tri 1, uv coord 1, axis 1 (v) 1*6+2*1+1 =  9
-
-    uvCoords[10] = 0;    //Tri 1, uv coord 2, axis 0 (u) 1*6+2*2+0 = 10 - c
-    uvCoords[11] = 0.5f; //Tri 1, uv coord 2, axis 1 (v) 1*6+2*1+1 = 11
-  }
-
-  private static void swapABC(float[][] vertices, float[][] vertexColours, float[] uvCoords){
-    float[] midPoint = {(vertices[2][0]+vertices[1][0])*0.5f, (vertices[2][1]+vertices[1][1])*0.5f, (vertices[2][2]+vertices[1][2])*0.5f};
-    float[] midColour = {(vertexColours[2][0]+vertexColours[1][0])*0.5f,
-                         (vertexColours[2][1]+vertexColours[1][1])*0.5f,
-                         (vertexColours[2][2]+vertexColours[1][2])*0.5f,
-                         (vertexColours[2][3]+vertexColours[1][3])*0.5f};
-
-    vertexColours[3][0] = vertexColours[2][0];
-    vertexColours[3][1] = vertexColours[2][1];
-    vertexColours[3][2] = vertexColours[2][2];
-    vertexColours[3][3] = vertexColours[2][3];
-
-    vertexColours[2][0] = midColour[0];
-    vertexColours[2][1] = midColour[1];
-    vertexColours[2][2] = midColour[2];
-    vertexColours[2][3] = midColour[3];
-      
-    vertices[3][0] = vertices[2][0];
-    vertices[3][1] = vertices[2][1];
-    vertices[3][2] = vertices[2][2];
-
-    vertices[2][0] = midPoint[0];
-    vertices[2][1] = midPoint[1];
-    vertices[2][2] = midPoint[2];
-    
-    //Tri 0, UV-coord 0
-    uvCoords[0] = 0;
-    uvCoords[1] = 1;
-
-    //Tri 0, UV-coord 1
-    uvCoords[2] = 1;
-    uvCoords[3] = 0.5f;
-
-    //Tri 0, UV-coord 2
-    uvCoords[4] = 1;
-    uvCoords[5] = 1;
-    
-    //Tri 1, UV-coord 0
-    uvCoords[6] = 0;
-    uvCoords[7] = 0;
-    
-    //Tri 1, UV-coord 2
-    uvCoords[10] = 1;
-    uvCoords[11] = 0.5f;
-  }
-
   
   
   //Tests if two lines are intersecting
